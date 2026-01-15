@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pakistan Stock Tax Calculator - FIFO Capital Gains Tax</title>
+
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
     <link rel="stylesheet" href="css/styles.css">
 
     <!-- jsPDF for PDF generation -->
@@ -11,194 +20,645 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>Pakistan Stock Exchange</h1>
-            <h2>FIFO Tax Calculator</h2>
-            <p class="subtitle">Capital Gains Tax Calculator with T+2 Settlement</p>
+        <!-- Header - Minimal Branding -->
+        <header class="header-modern">
+            <div class="header-brand-row">
+                <!-- Logo: Shield with Rupee & Percentage -->
+                <div class="header-logo">
+                    <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Shield Shape -->
+                        <path d="M26 2L46 10V24C46 36.5 37.5 47 26 50C14.5 47 6 36.5 6 24V10L26 2Z" fill="url(#shieldGrad)" stroke="url(#shieldStroke)" stroke-width="1.5"/>
+                        <!-- Inner glow -->
+                        <path d="M26 6L42 12.5V24C42 34 35 43 26 46C17 43 10 34 10 24V12.5L26 6Z" fill="rgba(16, 185, 129, 0.1)"/>
+                        <!-- Rupee Symbol -->
+                        <text x="18" y="28" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#10B981">₨</text>
+                        <!-- Percentage -->
+                        <text x="29" y="36" font-family="Inter, Arial" font-size="11" font-weight="600" fill="#34D399">%</text>
+                        <defs>
+                            <linearGradient id="shieldGrad" x1="6" y1="2" x2="46" y2="50">
+                                <stop offset="0%" stop-color="rgba(16, 185, 129, 0.2)"/>
+                                <stop offset="100%" stop-color="rgba(16, 185, 129, 0.05)"/>
+                            </linearGradient>
+                            <linearGradient id="shieldStroke" x1="6" y1="2" x2="46" y2="50">
+                                <stop offset="0%" stop-color="#10B981"/>
+                                <stop offset="100%" stop-color="#059669"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="header-brand-text">
+                    <h1 class="header-title-modern">PakFolio</h1>
+                    <span class="header-badge-inline">FBR Compliant</span>
+                </div>
+            </div>
+            <p class="header-tagline-modern">Calculate Your Exact PSX Tax Before You Sell</p>
+            <div class="header-features-modern">
+                <span class="feature-chip"><i data-lucide="bar-chart-3" class="lucide-sm"></i> FIFO Engine</span>
+                <span class="feature-chip"><i data-lucide="shield-check" class="lucide-sm"></i> 100% Private</span>
+                <span class="feature-chip"><i data-lucide="check-circle" class="lucide-sm"></i> T+2 Ready</span>
+            </div>
         </header>
 
-        <!-- Settings Panel -->
-        <div class="settings-panel">
-            <div class="setting-item">
-                <label class="toggle-label">
-                    <input type="checkbox" id="filerStatus" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-text">Filer Status</span>
-                </label>
-                <span class="setting-description" id="filerStatusText">Current: Filer (15% flat rate)</span>
+
+        <!-- Hero Tax Summary - Dark Glassmorphism -->
+        <section class="tax-summary-hero" id="taxSummaryHero">
+            <!-- Main Tax Amount - HERO -->
+            <div class="tax-hero-section">
+                <div class="hero-label">Total Tax Liability</div>
+                <div class="hero-value" id="heroTaxLiability">Rs. 0.00</div>
+                <div class="hero-context">
+                    <span>on realized gains of </span>
+                    <span class="hero-context-amount" id="heroContextGains">Rs. 0.00</span>
+                </div>
             </div>
-        </div>
+
+            <!-- Tax Rate Badge - Secondary -->
+            <div class="tax-rate-badge" id="taxRateBadge">
+                <span class="tax-rate-label">Tax Rate:</span>
+                <span class="tax-rate-value" id="taxRateValue">15%</span>
+                <span class="tax-rate-status" id="taxRateStatus">(Filer)</span>
+            </div>
+
+            <!-- Divider -->
+            <div class="hero-divider"></div>
+
+            <!-- Supporting Metrics - Two Column Grid -->
+            <div class="hero-metrics-grid-v2">
+                <div class="hero-metric-v2">
+                    <div class="metric-label-v2">Cost Basis</div>
+                    <div class="metric-value-v2" id="heroCostBasis">Rs. 0.00</div>
+                </div>
+                <div class="hero-metric-v2">
+                    <div class="metric-label-v2">Sale Proceeds</div>
+                    <div class="metric-value-v2" id="heroSaleProceeds">Rs. 0.00</div>
+                </div>
+                <div class="hero-metric-v2">
+                    <div class="metric-label-v2">Capital Gain</div>
+                    <div class="metric-value-v2 gain" id="heroNetGain">Rs. 0.00</div>
+                </div>
+                <div class="hero-metric-v2 highlight">
+                    <div class="metric-label-v2">Your Tax</div>
+                    <div class="metric-value-v2 tax" id="heroYourTax">Rs. 0.00</div>
+                </div>
+            </div>
+        </section>
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Transaction Input -->
-            <section class="card">
-                <h3>Add Transaction</h3>
-                <form id="transactionForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="transactionType">Type</label>
-                            <select id="transactionType" required>
-                                <option value="BUY">Buy</option>
-                                <option value="SELL">Sell</option>
-                            </select>
+            <!-- Home Tab -->
+            <div id="tab-home" class="tab-content active">
+                <!-- Welcome Empty State (shown when no data) -->
+                <div id="welcomeEmptyState" class="welcome-empty-state" style="display: none;">
+                    <div class="glass-card animate-scale-in" style="text-align: center; padding: 48px 32px;">
+                        <!-- Welcome Icon -->
+                        <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="sparkles" style="width: 40px; height: 40px; color: var(--success-green);"></i>
                         </div>
 
-                        <div class="form-group">
-                            <label for="symbol">Symbol</label>
-                            <input type="text" id="symbol" placeholder="e.g., OGDC" required>
+                        <!-- Welcome Text -->
+                        <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Welcome to PakFolio!</h2>
+                        <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 32px;">Your smart tax companion for Pakistan stocks</p>
+
+                        <!-- Steps -->
+                        <div style="display: flex; flex-direction: column; gap: 16px; max-width: 320px; margin: 0 auto 32px;">
+                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">1</div>
+                                <span style="color: var(--text-primary); font-size: 0.95rem;">Add your first stock purchase</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">2</div>
+                                <span style="color: var(--text-primary); font-size: 0.95rem;">Track your profits in real-time</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">3</div>
+                                <span style="color: var(--text-primary); font-size: 0.95rem;">Calculate exact tax before selling</span>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" id="quantity" min="1" placeholder="100" required>
+                        <!-- Benefits -->
+                        <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 32px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="check-circle" style="width: 18px; height: 18px; color: var(--success-green);"></i>
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">FBR Compliant</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="shield" style="width: 18px; height: 18px; color: var(--success-green);"></i>
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">100% Private</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="file-text" style="width: 18px; height: 18px; color: var(--success-green);"></i>
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Export Reports</span>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="price">Price (PKR)</label>
-                            <input type="number" id="price" min="0" step="0.01" placeholder="100.00" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="tradeDate">Trade Date</label>
-                            <input type="date" id="tradeDate" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Add Transaction</button>
-                </form>
-            </section>
-
-            <!-- Holdings Display -->
-            <section class="card">
-                <div class="section-header">
-                    <h3>Current Holdings</h3>
-                    <button class="btn btn-secondary" onclick="app.refreshHoldings()">Refresh</button>
-                </div>
-                <div id="holdingsDisplay" class="holdings-display">
-                    <p class="empty-state">No holdings yet. Add buy transactions to get started.</p>
-                </div>
-            </section>
-
-            <!-- Realized Gains -->
-            <section class="card">
-                <div class="section-header">
-                    <h3>Realized Gains & Tax</h3>
-                    <div class="button-group">
-                        <button class="btn btn-secondary" onclick="app.exportToPDF()">Export PDF</button>
-                        <button class="btn btn-secondary" onclick="app.exportToJSON()">Export JSON</button>
+                        <!-- CTA Button -->
+                        <button class="btn-modern" onclick="app.switchTab('add')" style="font-size: 1rem; padding: 16px 32px;">
+                            <i data-lucide="plus" class="lucide-sm"></i>
+                            Add Your First Transaction
+                        </button>
                     </div>
                 </div>
-                <div id="realizedGainsDisplay" class="realized-gains-display">
-                    <p class="empty-state">No sales recorded yet.</p>
-                </div>
-            </section>
 
-            <!-- Tax Summary -->
-            <section class="card tax-summary">
-                <h3>Tax Summary</h3>
-                <div id="taxSummaryDisplay" class="tax-summary-display">
-                    <div class="summary-item">
-                        <span class="summary-label">Total Gains:</span>
-                        <span class="summary-value" id="totalGains">Rs. 0.00</span>
+                <!-- Bento Grid Quick Actions -->
+                <div class="bento-grid" id="quickActionsCard">
+                    <div class="bento-item bento-sm quick-action animate-fade-in-up" onclick="app.switchTab('add')">
+                        <div class="quick-action-icon">
+                            <i data-lucide="plus-circle" class="lucide-xl"></i>
+                        </div>
+                        <span class="quick-action-label">Add Transaction</span>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Total Losses:</span>
-                        <span class="summary-value" id="totalLosses">Rs. 0.00</span>
+                    <div class="bento-item bento-sm quick-action animate-fade-in-up delay-1" onclick="app.switchTab('holdings')">
+                        <div class="quick-action-icon">
+                            <i data-lucide="wallet" class="lucide-xl"></i>
+                        </div>
+                        <span class="quick-action-label">View Holdings</span>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Net Gain:</span>
-                        <span class="summary-value" id="netGain">Rs. 0.00</span>
-                    </div>
-                    <div class="summary-item highlight">
-                        <span class="summary-label">Tax Liability:</span>
-                        <span class="summary-value" id="taxLiability">Rs. 0.00</span>
-                    </div>
-                    <div class="summary-item highlight">
-                        <span class="summary-label">Net Profit After Tax:</span>
-                        <span class="summary-value" id="netProfit">Rs. 0.00</span>
+                    <div class="bento-item bento-sm quick-action animate-fade-in-up delay-2" onclick="app.switchTab('tax')">
+                        <div class="quick-action-icon">
+                            <i data-lucide="file-text" class="lucide-xl"></i>
+                        </div>
+                        <span class="quick-action-label">Tax Report</span>
                     </div>
                 </div>
-            </section>
 
-            <!-- What-If Analysis -->
-            <section class="card">
-                <h3>What-If Analysis</h3>
-                <div class="whatif-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="whatifSymbol">Symbol</label>
-                            <input type="text" id="whatifSymbol" placeholder="OGDC">
+                <!-- Compliance Card - Glass Style -->
+                <section class="glass-card glass-card-accent glow-green animate-fade-in-up delay-3" id="complianceCard">
+                    <div class="card-header-modern">
+                        <div class="card-icon">
+                            <i data-lucide="shield-check" class="lucide-lg"></i>
                         </div>
-                        <div class="form-group">
-                            <label for="whatifQuantity">Quantity</label>
-                            <input type="number" id="whatifQuantity" min="1" placeholder="100">
-                        </div>
-                        <div class="form-group">
-                            <label for="whatifPrice">Sell Price</label>
-                            <input type="number" id="whatifPrice" min="0" step="0.01" placeholder="150.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="whatifDate">Sell Date</label>
-                            <input type="date" id="whatifDate">
+                        <div>
+                            <h3 class="card-title-modern">Tax Compliance Status</h3>
+                            <p class="card-subtitle">FBR Rules 2024 Compliant</p>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="app.runWhatIfAnalysis()">Calculate</button>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
+                            <i data-lucide="check" style="color: var(--success-green); width: 18px; height: 18px;"></i>
+                            <span style="color: var(--text-primary); font-size: 0.9rem;">15% flat rate for securities acquired after July 1, 2024</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
+                            <i data-lucide="check" style="color: var(--success-green); width: 18px; height: 18px;"></i>
+                            <span style="color: var(--text-primary); font-size: 0.9rem;">FIFO method compliant with Pakistan tax regulations</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Add Transaction Tab -->
+            <div id="tab-add" class="tab-content">
+                <!-- Quick Transaction Entry -->
+                <section class="glass-card animate-fade-in-up">
+                    <div class="card-header-modern">
+                        <div class="card-icon primary">
+                            <i data-lucide="plus-circle" class="lucide-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title-modern">Add Transaction</h3>
+                            <p class="card-subtitle">Quick entry - all fields on one screen</p>
+                        </div>
+                    </div>
+
+                    <form id="transactionForm" class="form-modern">
+                        <!-- Transaction Type Toggle -->
+                        <div class="transaction-type-toggle">
+                            <button type="button" class="type-btn active" data-type="BUY" onclick="selectTransactionType('BUY')">
+                                <i data-lucide="trending-up" class="lucide-sm"></i>
+                                Buy
+                            </button>
+                            <button type="button" class="type-btn" data-type="SELL" onclick="selectTransactionType('SELL')">
+                                <i data-lucide="trending-down" class="lucide-sm"></i>
+                                Sell
+                            </button>
+                            <input type="hidden" id="transactionType" value="BUY" required>
+                        </div>
+
+                        <!-- Form Fields -->
+                        <div class="form-grid">
+                            <div class="input-float">
+                                <input type="text" id="symbol" placeholder=" " required autocomplete="off">
+                                <label for="symbol">Stock Symbol</label>
+                                <span class="input-hint">e.g., OGDC, HBL</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="number" id="quantity" placeholder=" " min="1" required>
+                                <label for="quantity">Quantity</label>
+                                <span class="input-hint">Number of shares</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="number" id="price" placeholder=" " min="0" step="0.01" required>
+                                <label for="price">Price per Share</label>
+                                <span class="input-hint">PKR</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="date" id="tradeDate" placeholder=" " required>
+                                <label for="tradeDate">Trade Date</label>
+                            </div>
+                        </div>
+
+                        <!-- Quick Summary -->
+                        <div class="transaction-summary-modern" id="transactionSummary" style="display: none;">
+                            <div class="summary-row">
+                                <span class="summary-label-modern">Transaction Value</span>
+                                <span class="summary-amount-modern" id="summaryAmount">Rs. 0.00</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-modern btn-submit">
+                            <i data-lucide="plus" class="lucide-sm"></i>
+                            Add Transaction
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Holdings Tab -->
+            <div id="tab-holdings" class="tab-content">
+                <!-- Holdings Display -->
+                <section class="glass-card animate-fade-in-up">
+                    <div class="card-header-modern" style="margin-bottom: 24px;">
+                        <div class="card-icon">
+                            <i data-lucide="briefcase" class="lucide-lg"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 class="card-title-modern">Current Holdings</h3>
+                            <p class="card-subtitle">Your portfolio at a glance</p>
+                        </div>
+                        <button class="btn-modern btn-modern-secondary" onclick="app.refreshHoldings()" style="padding: 10px 16px; font-size: 0.85rem;">
+                            <i data-lucide="refresh-cw" class="lucide-sm"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="holdingsDisplay" class="holdings-display">
+                        <p class="empty-state">No holdings yet. Add buy transactions to get started.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tax Report Tab -->
+            <div id="tab-tax" class="tab-content">
+                <!-- Tax Summary Stats -->
+                <div class="tax-stats-grid" id="taxStatsGrid" style="display: none;">
+                    <div class="tax-stat-card">
+                        <div class="tax-stat-icon">
+                            <i data-lucide="receipt"></i>
+                        </div>
+                        <div class="tax-stat-content">
+                            <span class="tax-stat-label">Total Sales</span>
+                            <span class="tax-stat-value" id="taxStatSales">0</span>
+                        </div>
+                    </div>
+                    <div class="tax-stat-card">
+                        <div class="tax-stat-icon gain">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <div class="tax-stat-content">
+                            <span class="tax-stat-label">Total Gain</span>
+                            <span class="tax-stat-value gain" id="taxStatGain">Rs. 0</span>
+                        </div>
+                    </div>
+                    <div class="tax-stat-card highlight">
+                        <div class="tax-stat-icon tax">
+                            <i data-lucide="landmark"></i>
+                        </div>
+                        <div class="tax-stat-content">
+                            <span class="tax-stat-label">Tax Payable</span>
+                            <span class="tax-stat-value tax" id="taxStatTax">Rs. 0</span>
+                        </div>
+                    </div>
                 </div>
-                <div id="whatifResults" class="whatif-results"></div>
-            </section>
+
+                <!-- Realized Gains -->
+                <section class="glass-card animate-fade-in-up">
+                    <div class="card-header-modern" style="margin-bottom: 20px;">
+                        <div class="card-icon warning">
+                            <i data-lucide="scroll-text" class="lucide-lg"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 class="card-title-modern">Transaction History</h3>
+                            <p class="card-subtitle">FBR-Compliant FIFO Calculation</p>
+                        </div>
+                    </div>
+                    <div id="realizedGainsDisplay" class="realized-gains-display">
+                        <p class="empty-state">No sales recorded yet.</p>
+                    </div>
+                    <!-- Export Actions -->
+                    <div class="tax-export-actions" id="taxExportActions" style="display: none;">
+                        <button class="btn-modern" onclick="app.exportToPDF()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <i data-lucide="file-down" class="lucide-sm"></i> Export PDF
+                        </button>
+                        <button class="btn-modern btn-modern-secondary" onclick="app.exportToJSON()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <i data-lucide="download" class="lucide-sm"></i> Export JSON
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- More Tab -->
+            <div id="tab-more" class="tab-content">
+                <!-- Settings -->
+                <section class="glass-card animate-fade-in-up">
+                    <div class="card-header-modern">
+                        <div class="card-icon">
+                            <i data-lucide="settings" class="lucide-lg"></i>
+                        </div>
+                        <h3 class="card-title-modern">Settings</h3>
+                    </div>
+
+                    <!-- Modern Toggle Setting -->
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-label">
+                                <i data-lucide="file-check" class="setting-icon"></i>
+                                <span>Filer Status</span>
+                            </div>
+                            <p class="setting-desc" id="filerStatusText">You file income tax returns (15% rate)</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="filerStatus" checked>
+                            <span class="toggle-track">
+                                <span class="toggle-thumb"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="info-box-modern" style="margin-top: 16px;">
+                        <i data-lucide="info" class="info-box-icon"></i>
+                        <div class="info-box-content">
+                            <strong>What is Filer Status?</strong><br>
+                            Filer: You file income tax returns. Currently both filers and non-filers pay 15% flat rate on securities acquired after July 1, 2024.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- What-If Analysis / Tax Simulator -->
+                <section class="glass-card glass-card-warning glow-amber animate-fade-in-up delay-1">
+                    <div class="card-header-modern">
+                        <div class="card-icon warning">
+                            <i data-lucide="calculator" class="lucide-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title-modern">Tax Simulator</h3>
+                            <p class="card-subtitle">See your exact tax before selling</p>
+                        </div>
+                    </div>
+
+                    <!-- Modern Simulator Form -->
+                    <div class="simulator-form">
+                        <p class="simulator-prompt">I want to sell...</p>
+                        <div class="simulator-grid">
+                            <div class="input-float">
+                                <input type="number" id="whatifQuantity" placeholder=" " min="1">
+                                <label for="whatifQuantity">Quantity</label>
+                                <span class="input-hint">shares</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="text" id="whatifSymbol" placeholder=" " autocomplete="off">
+                                <label for="whatifSymbol">Symbol</label>
+                                <span class="input-hint">e.g., OGDC</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="number" id="whatifPrice" placeholder=" " min="0" step="0.01">
+                                <label for="whatifPrice">Price</label>
+                                <span class="input-hint">PKR per share</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="date" id="whatifDate" placeholder=" ">
+                                <label for="whatifDate">Sale Date</label>
+                            </div>
+                        </div>
+                        <button class="btn-modern btn-warning btn-submit" onclick="app.runWhatIfAnalysis()">
+                            <i data-lucide="calculator" class="lucide-sm"></i>
+                            Calculate My Tax
+                        </button>
+                    </div>
+
+                    <!-- Comparison Results -->
+                    <div id="whatifResults" class="whatif-results"></div>
+                </section>
 
             <!-- Corporate Actions -->
-            <section class="card">
-                <h3>Corporate Actions</h3>
-                <p style="color: #64748b; margin-bottom: 15px; font-size: 0.9rem;">
-                    Apply bonus shares or right issues to adjust cost basis automatically
+            <section class="glass-card animate-fade-in-up delay-2">
+                <div class="card-header-modern">
+                    <div class="card-icon primary">
+                        <i data-lucide="git-branch" class="lucide-lg"></i>
+                    </div>
+                    <h3 class="card-title-modern">Corporate Actions</h3>
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 1rem; line-height: 1.5;">
+                    When companies announce <strong>bonus shares</strong> or <strong>right issues</strong>, use this tool to automatically adjust your holdings and cost basis.
                 </p>
-                <form id="corporateActionForm" onsubmit="event.preventDefault(); handleCorporateActionSubmit();">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="caType">Action Type</label>
-                            <select id="caType" required onchange="toggleRightIssueFields()">
-                                <option value="BONUS">Bonus Shares</option>
-                                <option value="RIGHT">Right Issue</option>
-                            </select>
+
+                <!-- Educational Info Boxes -->
+                <div class="info-cards-grid">
+                    <!-- Bonus Shares Explanation -->
+                    <div class="info-card info-card-success">
+                        <div class="info-card-icon">
+                            <i data-lucide="gift" style="width: 24px; height: 24px; color: var(--success-green);"></i>
                         </div>
-                        <div class="form-group">
-                            <label for="caSymbol">Symbol</label>
-                            <input type="text" id="caSymbol" placeholder="e.g., HBL" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="caRatio">Ratio</label>
-                            <input type="text" id="caRatio" placeholder="20% or 1:5" required>
-                        </div>
-                        <div class="form-group" id="caPriceGroup" style="display: none;">
-                            <label for="caPrice">Right Price</label>
-                            <input type="number" id="caPrice" placeholder="80.00" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="caExDate">Ex-Date</label>
-                            <input type="date" id="caExDate" required>
+                        <div class="info-card-content">
+                            <h4 class="info-card-title">Bonus Shares</h4>
+                            <p class="info-card-text">Company gives you <strong>free additional shares</strong> based on how many you own.</p>
+                            <div class="info-card-example">
+                                <strong>Example:</strong> You own 100 shares. Company announces 20% bonus.<br>
+                                → You receive 20 free shares (total: 120)
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Apply Corporate Action</button>
+
+                    <!-- Right Issue Explanation -->
+                    <div class="info-card info-card-blue">
+                        <div class="info-card-icon">
+                            <i data-lucide="coins" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                        </div>
+                        <div class="info-card-content">
+                            <h4 class="info-card-title" style="color: #3b82f6;">Right Issue</h4>
+                            <p class="info-card-text">Company offers you <strong>additional shares at a discount</strong> (you must pay).</p>
+                            <div class="info-card-example">
+                                <strong>Example:</strong> You own 100 shares. Company offers 1:5 right @ Rs. 80.<br>
+                                → Buy 20 more at Rs. 80 each
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="corporateActionForm" class="ca-form-modern" onsubmit="event.preventDefault(); handleCorporateActionSubmit();">
+                    <div class="ca-form-grid">
+                        <div class="input-float">
+                            <select id="caType" required onchange="toggleRightIssueFields()">
+                                <option value="BONUS">Bonus Shares (Free)</option>
+                                <option value="RIGHT">Right Issue (Buy at discount)</option>
+                            </select>
+                            <label for="caType">Action Type</label>
+                        </div>
+                        <div class="input-float">
+                            <input type="text" id="caSymbol" placeholder=" " required autocomplete="off">
+                            <label for="caSymbol">Stock Symbol</label>
+                            <span class="input-hint">e.g., HBL</span>
+                        </div>
+                        <div class="input-float">
+                            <input type="text" id="caRatio" placeholder=" " required>
+                            <label for="caRatio">Ratio/Percentage</label>
+                            <span class="input-hint">20% or 1:5</span>
+                        </div>
+                        <div class="input-float" id="caPriceGroup" style="display: none;">
+                            <input type="number" id="caPrice" placeholder=" " step="0.01" min="0">
+                            <label for="caPrice">Right Price</label>
+                            <span class="input-hint">PKR per share</span>
+                        </div>
+                        <div class="input-float">
+                            <input type="date" id="caExDate" placeholder=" " required>
+                            <label for="caExDate">Ex-Date</label>
+                        </div>
+                    </div>
+
+                    <!-- Ex-Date Help Box -->
+                    <div class="info-box-modern">
+                        <i data-lucide="info" class="info-box-icon"></i>
+                        <div class="info-box-content">
+                            <strong>What is Ex-Date?</strong><br>
+                            The date you must own shares by to receive this benefit. If you buy shares <strong>after</strong> the ex-date, you won't get the bonus/rights.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-modern btn-submit">
+                        <i data-lucide="check-circle" class="lucide-sm"></i>
+                        Apply Corporate Action
+                    </button>
                 </form>
                 <div id="corporateActionsHistory"></div>
             </section>
 
             <!-- Data Management -->
-            <section class="card">
-                <h3>Data Management</h3>
-                <div class="button-group">
-                    <button class="btn btn-secondary" onclick="app.saveData()">Save to Storage</button>
-                    <button class="btn btn-secondary" onclick="app.loadData()">Load from Storage</button>
-                    <button class="btn btn-secondary" onclick="app.clearAllData()">Clear All Data</button>
-                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importFromFile(event)">
-                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
-                </div>
-                <div id="storageInfo" class="storage-info"></div>
-            </section>
+                <section class="glass-card animate-fade-in-up delay-3">
+                    <div class="card-header-modern">
+                        <div class="card-icon">
+                            <i data-lucide="database" class="lucide-lg"></i>
+                        </div>
+                        <h3 class="card-title-modern">Backup & Data Management</h3>
+                    </div>
+
+                    <!-- Data Statistics -->
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                            <i data-lucide="pie-chart" style="color: var(--success-green); width: 20px; height: 20px;"></i>
+                            <h4 style="margin: 0; color: var(--success-green); font-size: 1rem; font-weight: 600;">Your Portfolio Data</h4>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Transactions</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatTransactions">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Active Holdings</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatHoldings">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Realized Sales</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatSales">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Actions -->
+                    <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
+                            <i data-lucide="hard-drive-download" style="color: #3b82f6; width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <div>
+                                <h4 style="margin: 0 0 8px 0; color: #3b82f6; font-size: 1rem;">Backup Your Data</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
+                                    Export your portfolio to keep a backup. Use this before clearing data or switching devices.
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn-modern" onclick="app.exportToJSON()" style="font-size: 0.85rem; padding: 12px 18px;">
+                                <i data-lucide="download" class="lucide-sm"></i> Download JSON
+                            </button>
+                            <button class="btn-modern btn-modern-secondary" onclick="app.exportToPDF()" style="font-size: 0.85rem; padding: 12px 18px;">
+                                <i data-lucide="file-text" class="lucide-sm"></i> Download PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Import Actions -->
+                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
+                            <i data-lucide="hard-drive-upload" style="color: #10b981; width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <div>
+                                <h4 style="margin: 0 0 8px 0; color: #10b981; font-size: 1rem;">Import Data</h4>
+                                <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
+                                    Restore from a previous backup or import transactions from your broker's CSV file.
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importFromFile(event)">
+                            <button class="btn-modern btn-modern-secondary" onclick="document.getElementById('importFile').click()" style="font-size: 0.85rem; padding: 12px 18px;">
+                                <i data-lucide="folder-open" class="lucide-sm"></i> Import JSON
+                            </button>
+                            <input type="file" id="importCSV" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
+                            <button class="btn-modern btn-modern-secondary" onclick="document.getElementById('importCSV').click()" style="font-size: 0.85rem; padding: 12px 18px;">
+                                <i data-lucide="table" class="lucide-sm"></i> Import CSV
+                            </button>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 0.85rem; color: #475569;">
+                            <strong>CSV Format:</strong> Your broker's CSV should have columns: Date, Type (BUY/SELL), Symbol, Quantity, Price
+                        </div>
+                    </div>
+
+                    <!-- Storage Info -->
+                    <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="hard-drive" style="color: var(--text-muted); width: 20px; height: 20px;"></i>
+                            <div id="storageInfo" class="storage-info" style="flex: 1;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Destructive Actions -->
+                    <div class="glass-card-danger" style="padding: 20px; border-radius: 16px;">
+                        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
+                            <i data-lucide="alert-triangle" style="color: var(--danger-red); width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <div>
+                                <h4 style="margin: 0 0 8px 0; color: var(--danger-red); font-size: 1rem;">Danger Zone</h4>
+                                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+                                    <strong style="color: var(--danger-red);">Warning:</strong> These actions are permanent and cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                        <button class="btn-modern" onclick="app.clearAllData()" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 12px 18px;">
+                            <i data-lucide="trash-2" class="lucide-sm"></i> Clear All Data
+                        </button>
+                    </div>
+                </section>
+            </div>
         </div>
+
+        <!-- Bottom Tab Navigation - Modern -->
+        <nav class="tab-bar-modern">
+            <div class="tab-bar-container">
+                <div class="tab-modern active" onclick="app.switchTab('home')">
+                    <i data-lucide="home" class="tab-modern-icon"></i>
+                    <div class="tab-modern-label">Home</div>
+                </div>
+                <div class="tab-modern" onclick="app.switchTab('holdings')">
+                    <i data-lucide="briefcase" class="tab-modern-icon"></i>
+                    <div class="tab-modern-label">Holdings</div>
+                </div>
+                <!-- Center FAB Button -->
+                <div class="tab-fab" onclick="app.switchTab('add')">
+                    <i data-lucide="plus"></i>
+                </div>
+                <div class="tab-modern" onclick="app.switchTab('tax')">
+                    <i data-lucide="receipt" class="tab-modern-icon"></i>
+                    <div class="tab-modern-label">Tax</div>
+                </div>
+                <div class="tab-modern" onclick="app.switchTab('more')">
+                    <i data-lucide="settings" class="tab-modern-icon"></i>
+                    <div class="tab-modern-label">More</div>
+                </div>
+            </div>
+        </nav>
 
         <!-- Footer -->
         <footer class="footer">
@@ -208,7 +668,70 @@
     </div>
 
     <!-- Message Toast -->
-    <div id="messageToast" class="message-toast"></div>
+    <div id="messageToast" class="toast-modern">
+        <div class="toast-icon" id="toastIcon">
+            <i data-lucide="check-circle"></i>
+        </div>
+        <div class="toast-content">
+            <span class="toast-message" id="toastMessage"></span>
+        </div>
+        <button class="toast-close" onclick="app.hideToast()">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="modal-overlay loading-modal">
+        <div class="modal-container-modern">
+            <div class="loading-spinner-modern">
+                <div class="spinner-ring"></div>
+                <div class="spinner-icon">
+                    <i data-lucide="loader-2"></i>
+                </div>
+            </div>
+            <h2 class="loading-title" id="loadingTitle">Processing...</h2>
+            <p class="loading-description" id="loadingDescription">Please wait while we calculate your tax.</p>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal-overlay error-modal">
+        <div class="modal-container">
+            <div class="modal-icon">
+                <i data-lucide="alert-triangle" style="width: 48px; height: 48px; color: var(--warning-amber);"></i>
+            </div>
+            <h2 class="modal-title" id="errorTitle">Can't Complete Action</h2>
+            <p class="modal-description" id="errorDescription">Something went wrong.</p>
+            <div class="error-details" id="errorDetails" style="display: none;">
+                <!-- Dynamic error details will be inserted here -->
+            </div>
+            <div class="modal-actions" id="errorActions">
+                <button class="btn btn-primary" onclick="app.hideErrorModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay confirm-modal">
+        <div class="modal-container">
+            <div class="confirm-icon" id="confirmIcon">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+            <h2 class="confirm-title" id="confirmTitle">Are you sure?</h2>
+            <p class="confirm-description" id="confirmDescription">This action cannot be undone.</p>
+            <div class="confirm-details" id="confirmDetails" style="display: none;">
+                <!-- Dynamic details will be inserted here -->
+            </div>
+            <div class="confirm-input-wrapper" id="confirmInputWrapper" style="display: none;">
+                <label class="confirm-input-label" id="confirmInputLabel">Type "DELETE" to confirm:</label>
+                <input type="text" id="confirmInput" class="confirm-input" placeholder="Type here..." autocomplete="off">
+            </div>
+            <div class="modal-actions" id="confirmActions">
+                <button class="btn btn-secondary" onclick="app.hideConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmActionBtn" onclick="app.executeConfirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Load JavaScript Modules -->
     <script src="js/fifo-engine.js"></script>
@@ -262,9 +785,38 @@
             }
         }
 
+        // Transaction type toggle
+        function selectTransactionType(type) {
+            // Update hidden input
+            document.getElementById('transactionType').value = type;
+
+            // Update button states
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.type === type) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Re-render icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
         // Initialize on load
         document.addEventListener('DOMContentLoaded', () => {
             toggleRightIssueFields();
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Set default date to today
+            const tradeDateInput = document.getElementById('tradeDate');
+            if (tradeDateInput && !tradeDateInput.value) {
+                tradeDateInput.value = new Date().toISOString().split('T')[0];
+            }
         });
     </script>
 </body>
