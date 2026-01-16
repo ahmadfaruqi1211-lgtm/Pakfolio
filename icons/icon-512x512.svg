@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+
+  <!-- Shield Shape -->
+  <path d="M256 72L424 128V224C424 352 348 436 256 468C164 436 88 352 88 224V128L256 72Z" fill="url(#shieldGrad512)" stroke="url(#shieldStroke512)" stroke-width="6"/>
+
+  <!-- Inner glow -->
+  <path d="M256 104L384 148V224C384 332 324 400 256 428C188 400 128 332 128 224V148L256 104Z" fill="rgba(16, 185, 129, 0.15)"/>
+
+  <!-- Rupee Symbol -->
+  <text x="156" y="290" font-family="Inter, Arial, sans-serif" font-size="130" font-weight="700" fill="#10B981">Rs</text>
+
+  <!-- Percentage Symbol -->
+  <text x="280" y="380" font-family="Inter, Arial, sans-serif" font-size="90" font-weight="600" fill="#34D399">%</text>
+
+  <defs>
+    <linearGradient id="shieldGrad512" x1="88" y1="72" x2="424" y2="468" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(16, 185, 129, 0.3)"/>
+      <stop offset="100%" stop-color="rgba(16, 185, 129, 0.1)"/>
+    </linearGradient>
+    <linearGradient id="shieldStroke512" x1="88" y1="72" x2="424" y2="468" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+</svg>

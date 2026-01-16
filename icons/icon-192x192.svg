@@ -1,0 +1,27 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="#0f172a"/>
+
+  <!-- Shield Shape -->
+  <path d="M96 28L160 48V88C160 132 132 164 96 176C60 164 32 132 32 88V48L96 28Z" fill="url(#shieldGrad192)" stroke="url(#shieldStroke192)" stroke-width="3"/>
+
+  <!-- Inner glow -->
+  <path d="M96 40L144 56V88C144 124 120 148 96 160C72 148 48 124 48 88V56L96 40Z" fill="rgba(16, 185, 129, 0.15)"/>
+
+  <!-- Rupee Symbol -->
+  <text x="62" y="108" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700" fill="#10B981">Rs</text>
+
+  <!-- Percentage Symbol -->
+  <text x="105" y="140" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="600" fill="#34D399">%</text>
+
+  <defs>
+    <linearGradient id="shieldGrad192" x1="32" y1="28" x2="160" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(16, 185, 129, 0.3)"/>
+      <stop offset="100%" stop-color="rgba(16, 185, 129, 0.1)"/>
+    </linearGradient>
+    <linearGradient id="shieldStroke192" x1="32" y1="28" x2="160" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+</svg>

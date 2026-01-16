@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Shape (monochrome for Safari) -->
+  <path d="M256 48L448 112V240C448 376 360 456 256 496C152 456 64 376 64 240V112L256 48Z" fill="black"/>
+  <!-- Inner cutout for visual interest -->
+  <path d="M256 96L400 144V240C400 348 332 412 256 444C180 412 112 348 112 240V144L256 96Z" fill="white"/>
+  <!-- Rs symbol simplified -->
+  <text x="160" y="320" font-family="Arial, sans-serif" font-size="140" font-weight="700" fill="black">Rs</text>
+</svg>
