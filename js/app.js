@@ -140,8 +140,9 @@ class PakistanStockTaxApp {
                             'success'
                         );
                     } else {
+                        const gain = result && result.capitalGain !== undefined ? result.capitalGain : 0;
                         this.showMessage(
-                            `Added SELL: ${quantity} shares of ${symbol} @ Rs. ${price}. Capital Gain: Rs. ${result.capitalGain.toFixed(2)}`,
+                            `Added SELL: ${quantity} shares of ${symbol} @ Rs. ${price}. Capital Gain: Rs. ${gain.toFixed(2)}`,
                             'success'
                         );
                     }
@@ -929,23 +930,28 @@ class PakistanStockTaxApp {
      */
     generateRecommendations(saleResult, taxCalc, holding, symbol, quantity, price) {
         const recommendations = [];
-        const profitPercent = ((saleResult.capitalGain / saleResult.totalCostBasis) * 100).toFixed(1);
+        const capitalGain = saleResult?.capitalGain || 0;
+        const costBasis = saleResult?.totalCostBasis || 1;
+        const profitPercent = ((capitalGain / costBasis) * 100).toFixed(1);
         const remainingShares = holding.totalQuantity - quantity;
 
         // Recommendation 1: Profit/Loss advice
-        if (saleResult.capitalGain > 0) {
-            if (taxCalc.totalTax > saleResult.capitalGain * 0.3) {
+        if (capitalGain > 0) {
+            const effectiveRate = taxCalc?.effectiveTaxRate || 0;
+            const totalTax = taxCalc?.totalTax || 0;
+            if (totalTax > capitalGain * 0.3) {
                 recommendations.push({
                     icon: 'alert-triangle',
                     iconClass: 'warning',
-                    text: `Tax is <strong>${taxCalc.effectiveTaxRate.toFixed(0)}%</strong> of your gain. Consider if the timing is right.`,
+                    text: `Tax is <strong>${(effectiveRate * 100).toFixed(0)}%</strong> of your gain. Consider if the timing is right.`,
                     action: null
                 });
             } else {
+                const netProfit = taxCalc?.netProfit || 0;
                 recommendations.push({
                     icon: 'check-circle',
                     iconClass: 'success',
-                    text: `Good profit of <strong>${profitPercent}%</strong>. After tax, you keep <strong>${this.formatCurrency(taxCalc.netProfit)}</strong>.`,
+                    text: `Good profit of <strong>${profitPercent}%</strong>. After tax, you keep <strong>${this.formatCurrency(netProfit)}</strong>.`,
                     action: null
                 });
             }
@@ -953,13 +959,13 @@ class PakistanStockTaxApp {
             recommendations.push({
                 icon: 'trending-down',
                 iconClass: 'danger',
-                text: `This sale would realize a <strong>loss of ${this.formatCurrency(Math.abs(saleResult.capitalGain))}</strong>. No tax due on losses.`,
+                text: `This sale would realize a <strong>loss of ${this.formatCurrency(Math.abs(capitalGain))}</strong>. No tax due on losses.`,
                 action: null
             });
         }
 
         // Recommendation 2: Partial sale suggestion
-        if (remainingShares > 0 && saleResult.capitalGain > 0) {
+        if (remainingShares > 0 && capitalGain > 0) {
             const partialQty = Math.floor(quantity / 2);
             if (partialQty > 0) {
                 recommendations.push({
