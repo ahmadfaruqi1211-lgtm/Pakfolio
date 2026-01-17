@@ -3547,18 +3547,21 @@ select option {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
 }
 
 .summary-label-modern {
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-secondary);
+    flex-shrink: 0;
 }
 
 .summary-amount-modern {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--success-green);
+    text-align: right;
 }
 
 /* Submit Button */
