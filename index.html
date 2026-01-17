@@ -38,93 +38,64 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header - Minimal Branding -->
-        <header class="header-modern">
-            <div class="header-brand-row">
-                <!-- Logo: Shield with Rupee & Percentage -->
-                <div class="header-logo">
-                    <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Shield Shape -->
-                        <path d="M26 2L46 10V24C46 36.5 37.5 47 26 50C14.5 47 6 36.5 6 24V10L26 2Z" fill="url(#shieldGrad)" stroke="url(#shieldStroke)" stroke-width="1.5"/>
-                        <!-- Inner glow -->
-                        <path d="M26 6L42 12.5V24C42 34 35 43 26 46C17 43 10 34 10 24V12.5L26 6Z" fill="rgba(16, 185, 129, 0.1)"/>
-                        <!-- Rupee Symbol -->
-                        <text x="18" y="28" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#10B981">₨</text>
-                        <!-- Percentage -->
-                        <text x="29" y="36" font-family="Inter, Arial" font-size="11" font-weight="600" fill="#34D399">%</text>
-                        <defs>
-                            <linearGradient id="shieldGrad" x1="6" y1="2" x2="46" y2="50">
-                                <stop offset="0%" stop-color="rgba(16, 185, 129, 0.2)"/>
-                                <stop offset="100%" stop-color="rgba(16, 185, 129, 0.05)"/>
-                            </linearGradient>
-                            <linearGradient id="shieldStroke" x1="6" y1="2" x2="46" y2="50">
-                                <stop offset="0%" stop-color="#10B981"/>
-                                <stop offset="100%" stop-color="#059669"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-                <div class="header-brand-text">
-                    <h1 class="header-title-modern">PakFolio</h1>
-                    <span class="header-badge-inline">FBR Compliant</span>
+        <!-- Header - Compact -->
+        <header class="header-compact">
+            <div class="header-left">
+                <div class="logo-box">
+                    <span class="logo-text">PakFolio</span>
                 </div>
             </div>
-            <p class="header-tagline-modern">Calculate Your Exact PSX Tax Before You Sell</p>
-            <div class="header-features-modern">
-                <span class="feature-chip"><i data-lucide="bar-chart-3" class="lucide-sm"></i> FIFO Engine</span>
-                <span class="feature-chip"><i data-lucide="shield-check" class="lucide-sm"></i> 100% Private</span>
-                <span class="feature-chip"><i data-lucide="check-circle" class="lucide-sm"></i> T+2 Ready</span>
+            <div class="header-right">
+                <button class="header-icon-btn" onclick="app.switchTab('more')" title="Settings">
+                    <i data-lucide="settings"></i>
+                </button>
             </div>
         </header>
-
-
-        <!-- Hero Tax Summary - Dark Glassmorphism -->
-        <section class="tax-summary-hero" id="taxSummaryHero">
-            <!-- Main Tax Amount - HERO -->
-            <div class="tax-hero-section">
-                <div class="hero-label">Total Tax Liability</div>
-                <div class="hero-value" id="heroTaxLiability">Rs. 0.00</div>
-                <div class="hero-context">
-                    <span>on realized gains of </span>
-                    <span class="hero-context-amount" id="heroContextGains">Rs. 0.00</span>
-                </div>
-            </div>
-
-            <!-- Tax Rate Badge - Secondary -->
-            <div class="tax-rate-badge" id="taxRateBadge">
-                <span class="tax-rate-label">Tax Rate:</span>
-                <span class="tax-rate-value" id="taxRateValue">15%</span>
-                <span class="tax-rate-status" id="taxRateStatus">(Filer)</span>
-            </div>
-
-            <!-- Divider -->
-            <div class="hero-divider"></div>
-
-            <!-- Supporting Metrics - Two Column Grid -->
-            <div class="hero-metrics-grid-v2">
-                <div class="hero-metric-v2">
-                    <div class="metric-label-v2">Cost Basis</div>
-                    <div class="metric-value-v2" id="heroCostBasis">Rs. 0.00</div>
-                </div>
-                <div class="hero-metric-v2">
-                    <div class="metric-label-v2">Sale Proceeds</div>
-                    <div class="metric-value-v2" id="heroSaleProceeds">Rs. 0.00</div>
-                </div>
-                <div class="hero-metric-v2">
-                    <div class="metric-label-v2">Capital Gain</div>
-                    <div class="metric-value-v2 gain" id="heroNetGain">Rs. 0.00</div>
-                </div>
-                <div class="hero-metric-v2 highlight">
-                    <div class="metric-label-v2">Your Tax</div>
-                    <div class="metric-value-v2 tax" id="heroYourTax">Rs. 0.00</div>
-                </div>
-            </div>
-        </section>
 
         <!-- Main Content -->
         <div class="main-content">
             <!-- Home Tab -->
             <div id="tab-home" class="tab-content active">
+                <!-- Tax Summary - Now inside Home tab -->
+                <section class="tax-summary-hero tax-summary-compact" id="taxSummaryHero">
+                    <!-- Main Tax Amount -->
+                    <div class="tax-hero-section">
+                        <div class="hero-label">Total Tax Liability</div>
+                        <div class="hero-value" id="heroTaxLiability">Rs. 0.00</div>
+                        <div class="hero-context">
+                            <span>on realized gains of </span>
+                            <span class="hero-context-amount" id="heroContextGains">Rs. 0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Tax Rate Badge -->
+                    <div class="tax-rate-badge" id="taxRateBadge">
+                        <span class="tax-rate-label">Tax Rate:</span>
+                        <span class="tax-rate-value" id="taxRateValue">15%</span>
+                        <span class="tax-rate-status" id="taxRateStatus">(Filer)</span>
+                    </div>
+
+                    <!-- Compact Metrics Grid -->
+                    <div class="hero-metrics-compact">
+                        <div class="metric-compact">
+                            <span class="metric-label-compact">Cost</span>
+                            <span class="metric-value-compact" id="heroCostBasis">Rs. 0</span>
+                        </div>
+                        <div class="metric-compact">
+                            <span class="metric-label-compact">Proceeds</span>
+                            <span class="metric-value-compact" id="heroSaleProceeds">Rs. 0</span>
+                        </div>
+                        <div class="metric-compact">
+                            <span class="metric-label-compact">Gain</span>
+                            <span class="metric-value-compact gain" id="heroNetGain">Rs. 0</span>
+                        </div>
+                        <div class="metric-compact highlight">
+                            <span class="metric-label-compact">Tax</span>
+                            <span class="metric-value-compact tax" id="heroYourTax">Rs. 0</span>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Welcome Empty State (shown when no data) -->
                 <div id="welcomeEmptyState" class="welcome-empty-state" style="display: none;">
                     <div class="glass-card animate-scale-in" style="text-align: center; padding: 48px 32px;">
@@ -177,50 +148,6 @@
                     </div>
                 </div>
 
-                <!-- Bento Grid Quick Actions -->
-                <div class="bento-grid" id="quickActionsCard">
-                    <div class="bento-item bento-sm quick-action animate-fade-in-up" onclick="app.switchTab('add')">
-                        <div class="quick-action-icon">
-                            <i data-lucide="plus-circle" class="lucide-xl"></i>
-                        </div>
-                        <span class="quick-action-label">Add Transaction</span>
-                    </div>
-                    <div class="bento-item bento-sm quick-action animate-fade-in-up delay-1" onclick="app.switchTab('holdings')">
-                        <div class="quick-action-icon">
-                            <i data-lucide="wallet" class="lucide-xl"></i>
-                        </div>
-                        <span class="quick-action-label">View Holdings</span>
-                    </div>
-                    <div class="bento-item bento-sm quick-action animate-fade-in-up delay-2" onclick="app.switchTab('tax')">
-                        <div class="quick-action-icon">
-                            <i data-lucide="file-text" class="lucide-xl"></i>
-                        </div>
-                        <span class="quick-action-label">Tax Report</span>
-                    </div>
-                </div>
-
-                <!-- Compliance Card - Glass Style -->
-                <section class="glass-card glass-card-accent glow-green animate-fade-in-up delay-3" id="complianceCard">
-                    <div class="card-header-modern">
-                        <div class="card-icon">
-                            <i data-lucide="shield-check" class="lucide-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title-modern">Tax Compliance Status</h3>
-                            <p class="card-subtitle">FBR Rules 2024 Compliant</p>
-                        </div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
-                            <i data-lucide="check" style="color: var(--success-green); width: 18px; height: 18px;"></i>
-                            <span style="color: var(--text-primary); font-size: 0.9rem;">15% flat rate for securities acquired after July 1, 2024</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
-                            <i data-lucide="check" style="color: var(--success-green); width: 18px; height: 18px;"></i>
-                            <span style="color: var(--text-primary); font-size: 0.9rem;">FIFO method compliant with Pakistan tax regulations</span>
-                        </div>
-                    </div>
-                </section>
             </div>
 
             <!-- Add Transaction Tab -->

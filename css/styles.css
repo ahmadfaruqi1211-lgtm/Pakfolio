@@ -130,10 +130,98 @@ h1, h2, h3, h4, h5, h6 {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 32px 24px;
+    padding: 16px 16px 32px;
 }
 
-/* Header - Modern Minimal Design */
+/* ================================
+   Compact Header
+   ================================ */
+
+.header-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Logo Box - App name in bordered box */
+.logo-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border: 2px solid var(--success-green);
+    border-radius: var(--radius-md);
+    background: rgba(16, 185, 129, 0.08);
+    transition: all 0.3s ease;
+}
+
+.logo-box:hover {
+    background: rgba(16, 185, 129, 0.15);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.logo-text {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--success-green);
+    letter-spacing: -0.02em;
+}
+
+/* Header Icon Button */
+.header-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.header-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.header-icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Header - Modern Minimal Design (Legacy) */
 .header-modern {
     text-align: center;
     padding: 32px 24px 40px;
@@ -902,6 +990,105 @@ a:focus-visible {
 .metric-value-v2.tax {
     color: var(--warning-amber);
     text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+/* ================================
+   Compact Tax Summary (Home Tab)
+   ================================ */
+
+.tax-summary-compact {
+    padding: 20px !important;
+    margin-bottom: 16px !important;
+}
+
+.tax-summary-compact .tax-hero-section {
+    margin-bottom: 12px;
+}
+
+.tax-summary-compact .hero-label {
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
+.tax-summary-compact .hero-value {
+    font-size: 2rem;
+}
+
+.tax-summary-compact .hero-context {
+    font-size: 0.85rem;
+}
+
+.tax-summary-compact .tax-rate-badge {
+    padding: 6px 12px;
+    margin-bottom: 16px;
+}
+
+.tax-summary-compact .tax-rate-label {
+    font-size: 0.75rem;
+}
+
+.tax-summary-compact .tax-rate-value {
+    font-size: 0.95rem;
+}
+
+.tax-summary-compact .tax-rate-status {
+    font-size: 0.75rem;
+}
+
+/* Compact Metrics Grid */
+.hero-metrics-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.metric-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 4px;
+    background: rgba(55, 65, 81, 0.4);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.metric-compact.highlight {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.metric-label-compact {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.metric-value-compact {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-value-compact.gain {
+    color: var(--success-green);
+}
+
+.metric-value-compact.loss {
+    color: var(--danger-red);
+}
+
+.metric-value-compact.tax {
+    color: var(--warning-amber);
+}
+
+/* Responsive: Stack metrics on very small screens */
+@media (max-width: 360px) {
+    .hero-metrics-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* SVG Tax Slab Progress Circle */

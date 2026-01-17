@@ -230,27 +230,21 @@ class PakistanStockTaxApp {
      */
     updateWelcomeState() {
         const welcomeContainer = document.getElementById('welcomeEmptyState');
-        const quickActionsCard = document.getElementById('quickActionsCard');
-        const complianceCard = document.getElementById('complianceCard');
         const taxSummaryHero = document.getElementById('taxSummaryHero');
 
         if (!welcomeContainer) return;
 
         if (this.isPortfolioEmpty()) {
-            // Show welcome state, hide other elements
+            // Show welcome state, hide tax summary
             welcomeContainer.style.display = 'block';
-            if (quickActionsCard) quickActionsCard.style.display = 'none';
-            if (complianceCard) complianceCard.style.display = 'none';
             if (taxSummaryHero) taxSummaryHero.style.display = 'none';
             // Re-initialize Lucide icons for the welcome state
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         } else {
-            // Hide welcome state, show dashboard elements
+            // Hide welcome state, show tax summary
             welcomeContainer.style.display = 'none';
-            if (quickActionsCard) quickActionsCard.style.display = 'grid';
-            if (complianceCard) complianceCard.style.display = 'block';
             if (taxSummaryHero) taxSummaryHero.style.display = 'block';
         }
     }
