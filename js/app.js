@@ -560,9 +560,14 @@ class PakistanStockTaxApp {
         let totalGain = 0;
         let totalTax = 0;
         realizedGains.forEach(sale => {
-            const taxCalc = this.taxCalculator.calculateTaxForSale(sale);
-            totalGain += sale.capitalGain;
-            totalTax += taxCalc.totalTax;
+            try {
+                const taxCalc = this.taxCalculator.calculateTaxForSale(sale);
+                totalGain += sale.capitalGain || 0;
+                totalTax += taxCalc?.totalTax || 0;
+            } catch (e) {
+                console.error('Error calculating tax for sale:', e);
+                totalGain += sale.capitalGain || 0;
+            }
         });
 
         // Update stats grid
@@ -583,9 +588,16 @@ class PakistanStockTaxApp {
         const sortedGains = [...realizedGains].sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate));
 
         for (const sale of sortedGains) {
-            const taxCalc = this.taxCalculator.calculateTaxForSale(sale);
-            const gainClass = sale.capitalGain >= 0 ? 'gain' : 'loss';
-            const gainIcon = sale.capitalGain >= 0 ? 'trending-up' : 'trending-down';
+            let taxCalc;
+            try {
+                taxCalc = this.taxCalculator.calculateTaxForSale(sale);
+            } catch (e) {
+                console.error('Error calculating tax for sale:', e);
+                taxCalc = { totalTax: 0, netProfit: sale.capitalGain || 0, taxByLot: [] };
+            }
+            const capitalGain = sale.capitalGain || 0;
+            const gainClass = capitalGain >= 0 ? 'gain' : 'loss';
+            const gainIcon = capitalGain >= 0 ? 'trending-up' : 'trending-down';
 
             html += `
                 <div class="tax-transaction-card">
@@ -600,7 +612,7 @@ class PakistanStockTaxApp {
                             </div>
                         </div>
                         <div class="tax-transaction-amount ${gainClass}">
-                            <span class="amount-prefix">${sale.capitalGain >= 0 ? '+' : ''}</span>${this.formatCurrency(sale.capitalGain)}
+                            <span class="amount-prefix">${capitalGain >= 0 ? '+' : ''}</span>${this.formatCurrency(capitalGain)}
                         </div>
                     </div>
                     <div class="tax-transaction-body">
@@ -617,14 +629,14 @@ class PakistanStockTaxApp {
                             <span class="stat-value">${this.formatCurrency(sale.totalCostBasis)}</span>
                         </div>
                         <div class="tax-transaction-stat highlight">
-                            <span class="stat-label">Tax (${taxCalc.taxByLot && taxCalc.taxByLot[0] ? taxCalc.taxByLot[0].taxRatePercentage : '15%'})</span>
-                            <span class="stat-value tax">${this.formatCurrency(taxCalc.totalTax)}</span>
+                            <span class="stat-label">Tax (${taxCalc?.taxByLot?.[0]?.taxRatePercentage || '15%'})</span>
+                            <span class="stat-value tax">${this.formatCurrency(taxCalc?.totalTax || 0)}</span>
                         </div>
                     </div>
                     <div class="tax-transaction-footer">
                         <div class="net-profit-row">
                             <span class="net-label">Net After Tax</span>
-                            <span class="net-value ${taxCalc.netProfit >= 0 ? 'gain' : 'loss'}">${this.formatCurrency(taxCalc.netProfit)}</span>
+                            <span class="net-value ${(taxCalc?.netProfit || 0) >= 0 ? 'gain' : 'loss'}">${this.formatCurrency(taxCalc?.netProfit || 0)}</span>
                         </div>
                     </div>
                 </div>
@@ -690,35 +702,43 @@ class PakistanStockTaxApp {
             return;
         }
 
-        const aggregateTax = this.taxCalculator.calculateAggregateTax(realizedGains);
+        let aggregateTax;
+        try {
+            aggregateTax = this.taxCalculator.calculateAggregateTax(realizedGains);
+        } catch (e) {
+            console.error('Error calculating aggregate tax:', e);
+            return;
+        }
 
         // Calculate total cost basis and sale proceeds
         let totalCostBasis = 0;
         let totalSaleProceeds = 0;
         realizedGains.forEach(sale => {
-            totalCostBasis += sale.totalCostBasis;
-            totalSaleProceeds += sale.saleProceeds;
+            totalCostBasis += sale.totalCostBasis || 0;
+            totalSaleProceeds += sale.saleProceeds || 0;
         });
 
         // Update hero tax amount (BIGGEST) - with counting animation
         const heroTaxEl = document.getElementById('heroTaxLiability');
         const heroGainsEl = document.getElementById('heroContextGains');
-        this.animateNumber(heroTaxEl, aggregateTax.totalTax, 1200);
-        this.animateNumber(heroGainsEl, aggregateTax.netGain, 1000);
+        const totalTax = aggregateTax?.totalTax || 0;
+        const netGain = aggregateTax?.netGain || 0;
+        this.animateNumber(heroTaxEl, totalTax, 1200);
+        this.animateNumber(heroGainsEl, netGain, 1000);
 
         // Update tax rate badge (secondary)
-        const effectiveTaxRate = aggregateTax.netGain > 0
-            ? (aggregateTax.totalTax / aggregateTax.netGain) * 100
+        const effectiveTaxRate = netGain > 0
+            ? (totalTax / netGain) * 100
             : 15;
-        document.getElementById('taxRateValue').textContent = `${effectiveTaxRate.toFixed(1)}%`;
+        document.getElementById('taxRateValue').textContent = `${(effectiveTaxRate || 15).toFixed(1)}%`;
         document.getElementById('taxRateStatus').textContent = this.taxCalculator.isFiler ? '(Filer)' : '(Non-Filer)';
 
         // Update supporting metrics grid - with staggered counting animation
         this.animateStats([
             { element: document.getElementById('heroCostBasis'), value: totalCostBasis },
             { element: document.getElementById('heroSaleProceeds'), value: totalSaleProceeds },
-            { element: document.getElementById('heroNetGain'), value: aggregateTax.netGain },
-            { element: document.getElementById('heroYourTax'), value: aggregateTax.totalTax }
+            { element: document.getElementById('heroNetGain'), value: netGain },
+            { element: document.getElementById('heroYourTax'), value: totalTax }
         ], 80);
     }
 
