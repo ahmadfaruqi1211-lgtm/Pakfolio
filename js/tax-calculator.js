@@ -365,3 +365,7 @@ class TaxCalculator {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = TaxCalculator;
 }
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.TaxCalculator = TaxCalculator;
+}

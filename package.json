@@ -4,15 +4,9 @@
   "description": "PakFolio - Pakistan Stock Tax Calculator (Mobile App)",
   "main": "index.html",
   "scripts": {
-    "sync": "npx cap sync",
-    "sync:android": "npx cap sync android",
-    "open:android": "npx cap open android",
-    "run:android": "npx cap run android",
-    "run:android:live": "npx cap run android --livereload --external",
-    "build:apk": "cd android && gradlew assembleRelease",
-    "build:aab": "cd android && gradlew bundleRelease",
-    "clean:android": "cd android && gradlew clean",
-    "update": "npx cap update"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "pakistan",
@@ -27,8 +21,18 @@
   "author": "PakFolio Team",
   "license": "MIT",
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/cli": "^8.0.0",
-    "@capacitor/core": "^8.0.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.1.0",
+    "vite": "^6.0.7",
+    "vite-plugin-static-copy": "^2.0.0"
   }
 }

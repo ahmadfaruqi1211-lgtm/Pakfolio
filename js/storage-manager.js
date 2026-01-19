@@ -502,3 +502,7 @@ class StorageManager {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = StorageManager;
 }
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.StorageManager = StorageManager;
+}

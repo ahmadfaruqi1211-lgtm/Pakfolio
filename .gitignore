@@ -2,14 +2,20 @@
 node_modules/
 package-lock.json
 
-# Android build files
-android/build/
-android/app/build/
-android/.gradle/
-android/local.properties
-android/.idea/
-android/*.iml
-android/captures/
+# Windows oddities
+nul
+
+# Assistant/temp folders
+.claude/
+tmpclaude-*
+
+# Vite build output (built to /mobile)
+mobile/
+
+# Capacitor
+android/
+ios/
+captures/
 android/.externalNativeBuild/
 android/.cxx/
 

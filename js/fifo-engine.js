@@ -532,7 +532,11 @@ class FIFOQueue {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FIFOQueue;
-}
+ // Export for use in other modules
+ if (typeof module !== 'undefined' && module.exports) {
+     module.exports = FIFOQueue;
+ }
+
+ if (typeof globalThis !== 'undefined') {
+     globalThis.FIFOQueue = FIFOQueue;
+ }
