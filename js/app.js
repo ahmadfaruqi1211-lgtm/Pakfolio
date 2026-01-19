@@ -1,7 +1,33 @@
 /**
  * Main Application Logic
  * Ties together all modules and handles UI interactions
+ *
+ * VERSION: 3.0.0 - Fail-safe architecture rewrite
+ * Last Updated: 2026-01-18
  */
+console.log('=== APP.JS VERSION 3.0.0 LOADED ===');
+
+/**
+ * GLOBAL SAFE NUMBER UTILITY
+ * Use this everywhere instead of direct .toFixed() calls
+ */
+function safeNumber(value, defaultValue = 0) {
+    if (value === undefined || value === null) return defaultValue;
+    const num = Number(value);
+    if (isNaN(num) || !isFinite(num)) return defaultValue;
+    return num;
+}
+
+function safeToFixed(value, decimals = 2, defaultValue = '0.00') {
+    const num = safeNumber(value, null);
+    if (num === null) return defaultValue;
+    return num.toFixed(decimals);
+}
+
+function safeFormatCurrency(value) {
+    const num = safeNumber(value, 0);
+    return `Rs. ${num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+}
 
 class PakistanStockTaxApp {
     constructor() {
@@ -17,7 +43,14 @@ class PakistanStockTaxApp {
         this.initializeEventListeners();
         this.setTodayDate();
         this.loadData();
-        this.updateAllDisplays();
+
+        // Wrap initial display update in try-catch
+        try {
+            this.updateAllDisplays();
+        } catch (e) {
+            console.error('Error during initial display update:', e);
+        }
+
         this.initializeFormListeners(); // Live calculation
 
         console.log('✓ Pakistan Stock Tax Calculator initialized');
@@ -62,40 +95,78 @@ class PakistanStockTaxApp {
      */
     handleAddTransaction() {
         try {
-            const type = document.getElementById('transactionType').value;
-            const symbol = document.getElementById('symbol').value.toUpperCase();
-            const quantity = parseFloat(document.getElementById('quantity').value);
-            const price = parseFloat(document.getElementById('price').value);
-            const tradeDate = document.getElementById('tradeDate').value;
+            // Step 1: Get and validate raw inputs
+            const typeEl = document.getElementById('transactionType');
+            const symbolEl = document.getElementById('symbol');
+            const quantityEl = document.getElementById('quantity');
+            const priceEl = document.getElementById('price');
+            const tradeDateEl = document.getElementById('tradeDate');
 
-            // Validate inputs
-            if (!symbol || quantity <= 0 || price <= 0 || !tradeDate) {
+            const type = typeEl ? typeEl.value : 'BUY';
+            const symbol = symbolEl ? symbolEl.value.toUpperCase().trim() : '';
+            const quantityRaw = quantityEl ? quantityEl.value : '';
+            const priceRaw = priceEl ? priceEl.value : '';
+            const tradeDate = tradeDateEl ? tradeDateEl.value : '';
+
+            // Step 2: Parse numbers safely
+            const quantity = safeNumber(parseFloat(quantityRaw), 0);
+            const price = safeNumber(parseFloat(priceRaw), 0);
+
+            // Step 3: Log data for debugging
+            console.log('=== TRANSACTION DATA ===');
+            console.log('Type:', type);
+            console.log('Symbol:', symbol);
+            console.log('Quantity (raw):', quantityRaw, '-> (parsed):', quantity);
+            console.log('Price (raw):', priceRaw, '-> (parsed):', price);
+            console.log('Trade Date:', tradeDate);
+            console.log('========================');
+
+            // Step 4: Validate inputs
+            if (!symbol || symbol.length === 0) {
                 this.showErrorModal({
-                    title: "Missing Information",
-                    description: "Please fill in all fields to add a transaction.",
-                    details: [
-                        { label: 'Symbol', value: symbol || 'Not entered', type: symbol ? '' : 'danger' },
-                        { label: 'Quantity', value: quantity > 0 ? quantity : 'Not entered', type: quantity > 0 ? '' : 'danger' },
-                        { label: 'Price', value: price > 0 ? `Rs. ${price}` : 'Not entered', type: price > 0 ? '' : 'danger' },
-                        { label: 'Date', value: tradeDate || 'Not selected', type: tradeDate ? '' : 'danger' }
-                    ],
+                    title: "Missing Symbol",
+                    description: "Please enter a stock symbol.",
                     primaryAction: { label: 'OK', onclick: 'app.hideErrorModal()' }
                 });
                 return;
             }
 
-            // For SELL transactions, check if we have enough shares
+            if (quantity <= 0 || isNaN(quantity)) {
+                this.showErrorModal({
+                    title: "Invalid Quantity",
+                    description: "Please enter a valid quantity greater than 0.",
+                    primaryAction: { label: 'OK', onclick: 'app.hideErrorModal()' }
+                });
+                return;
+            }
+
+            if (price <= 0 || isNaN(price)) {
+                this.showErrorModal({
+                    title: "Invalid Price",
+                    description: "Please enter a valid price greater than 0.",
+                    primaryAction: { label: 'OK', onclick: 'app.hideErrorModal()' }
+                });
+                return;
+            }
+
+            if (!tradeDate) {
+                this.showErrorModal({
+                    title: "Missing Date",
+                    description: "Please select a trade date.",
+                    primaryAction: { label: 'OK', onclick: 'app.hideErrorModal()' }
+                });
+                return;
+            }
+
+            // Step 5: For SELL transactions, check holdings
             if (type === 'SELL') {
                 const holdings = this.fifoQueue.getHoldings();
-                if (!holdings[symbol]) {
+                const holdingForSymbol = holdings[symbol];
+
+                if (!holdingForSymbol) {
                     this.showErrorModal({
                         title: "Can't Sell Shares",
                         description: `You don't have any ${symbol} shares to sell.`,
-                        details: [
-                            { label: 'Symbol', value: symbol, type: '' },
-                            { label: 'Available', value: '0 shares', type: 'danger' },
-                            { label: 'Trying to sell', value: `${quantity} shares`, type: 'danger' }
-                        ],
                         primaryAction: {
                             label: 'Add Buy First',
                             onclick: "app.hideErrorModal(); document.getElementById('transactionType').value = 'BUY';"
@@ -105,14 +176,11 @@ class PakistanStockTaxApp {
                     return;
                 }
 
-                if (holdings[symbol].totalQuantity < quantity) {
+                const availableQty = safeNumber(holdingForSymbol.totalQuantity, 0);
+                if (availableQty < quantity) {
                     this.showErrorModal({
                         title: "Can't Sell Shares",
-                        description: `You're trying to sell ${quantity} shares but you only own ${holdings[symbol].totalQuantity} ${symbol} shares.`,
-                        details: [
-                            { label: 'Available', value: `${holdings[symbol].totalQuantity} shares`, type: 'available' },
-                            { label: 'Trying to sell', value: `${quantity} shares`, type: 'danger' }
-                        ],
+                        description: `You're trying to sell ${quantity} shares but you only own ${availableQty} ${symbol} shares.`,
                         primaryAction: {
                             label: 'Fix Quantity',
                             onclick: 'app.hideErrorModal(); document.getElementById("quantity").focus();'
@@ -123,39 +191,49 @@ class PakistanStockTaxApp {
                 }
             }
 
-            // Show loading for transaction processing
+            // Step 6: Show loading
             this.showLoading('Processing transaction...', `Adding ${type} order for ${symbol}`);
 
-            // Add transaction (with slight delay for UX)
+            // Step 7: Add transaction (with slight delay for UX)
             setTimeout(() => {
                 try {
+                    console.log('Adding transaction to FIFO queue...');
                     const result = this.fifoQueue.addTransaction(type, symbol, quantity, price, tradeDate);
+                    console.log('Transaction result:', result);
+
+                    // Step 8: Auto-save IMMEDIATELY (before any display updates)
+                    const exportedData = this.fifoQueue.exportData();
+                    console.log('Exported data for save:', exportedData);
+                    this.storageManager.autoSave(exportedData);
 
                     this.hideLoading();
 
-                    // Show success message
+                    // Step 9: Show success message (using safe formatting)
                     if (type === 'BUY') {
                         this.showMessage(
-                            `Added BUY: ${quantity} shares of ${symbol} @ Rs. ${price}`,
+                            `Added BUY: ${quantity} shares of ${symbol} @ Rs. ${safeToFixed(price, 2)}`,
                             'success'
                         );
                     } else {
-                        const gain = result && result.capitalGain !== undefined ? result.capitalGain : 0;
+                        const gain = safeNumber(result?.capitalGain, 0);
                         this.showMessage(
-                            `Added SELL: ${quantity} shares of ${symbol} @ Rs. ${price}. Capital Gain: Rs. ${gain.toFixed(2)}`,
+                            `Added SELL: ${quantity} shares of ${symbol} @ Rs. ${safeToFixed(price, 2)}. Capital Gain: Rs. ${safeToFixed(gain, 2)}`,
                             'success'
                         );
                     }
 
-                    // Reset form
-                    document.getElementById('transactionForm').reset();
+                    // Step 10: Reset form
+                    const form = document.getElementById('transactionForm');
+                    if (form) form.reset();
                     this.setTodayDate();
 
-                    // Update displays
-                    this.updateAllDisplays();
-
-                    // Auto-save
-                    this.storageManager.autoSave(this.fifoQueue.exportData());
+                    // Update displays (wrapped in try-catch to prevent display errors from blocking save)
+                    try {
+                        this.updateAllDisplays();
+                    } catch (displayError) {
+                        console.error('Error updating displays:', displayError);
+                        // Display error is non-critical - data is already saved
+                    }
                 } catch (innerError) {
                     this.hideLoading();
                     this.showErrorModal({
@@ -204,11 +282,12 @@ class PakistanStockTaxApp {
      * Update all displays
      */
     updateAllDisplays() {
-        this.updateWelcomeState();
-        this.updateHoldingsDisplay();
-        this.updateRealizedGainsDisplay();
-        this.updateTaxSummary();
-        this.updateStorageInfo();
+        // Wrap each update in try-catch to prevent one failure from breaking all
+        try { this.updateWelcomeState(); } catch (e) { console.error('Error in updateWelcomeState:', e); }
+        try { this.updateHoldingsDisplay(); } catch (e) { console.error('Error in updateHoldingsDisplay:', e); }
+        try { this.updateRealizedGainsDisplay(); } catch (e) { console.error('Error in updateRealizedGainsDisplay:', e); }
+        try { this.updateTaxSummary(); } catch (e) { console.error('Error in updateTaxSummary:', e); }
+        try { this.updateStorageInfo(); } catch (e) { console.error('Error in updateStorageInfo:', e); }
     }
 
     /**
@@ -259,121 +338,199 @@ class PakistanStockTaxApp {
     }
 
     /**
-     * Update holdings display
+     * Update holdings display - FULLY PROTECTED WITH TRY/CATCH
      */
     updateHoldingsDisplay() {
-        const container = document.getElementById('holdingsDisplay');
-        if (!container) return;
+        try {
+            const container = document.getElementById('holdingsDisplay');
+            if (!container) return;
 
-        const holdings = this.fifoQueue.getHoldings();
+            console.log('=== UPDATING HOLDINGS DISPLAY ===');
+            const holdings = this.fifoQueue.getHoldings();
+            console.log('Holdings data:', holdings);
 
-        if (Object.keys(holdings).length === 0) {
-            container.innerHTML = `
-                <div class="empty-state-modern">
-                    <div class="empty-state-icon">
-                        <i data-lucide="briefcase"></i>
+            if (!holdings || Object.keys(holdings).length === 0) {
+                console.log('No holdings found, showing empty state');
+                container.innerHTML = `
+                    <div class="empty-state-modern">
+                        <div class="empty-state-icon">
+                            <i data-lucide="briefcase"></i>
+                        </div>
+                        <h4 class="empty-state-title">No Holdings Yet</h4>
+                        <p class="empty-state-text">Add your first stock purchase to start tracking your portfolio</p>
+                        <button class="btn-modern" onclick="app.switchTab('add')" style="margin-top: 16px;">
+                            <i data-lucide="plus" class="lucide-sm"></i>
+                            Add Transaction
+                        </button>
                     </div>
-                    <h4 class="empty-state-title">No Holdings Yet</h4>
-                    <p class="empty-state-text">Add your first stock purchase to start tracking your portfolio</p>
-                    <button class="btn-modern" onclick="app.switchTab('add')" style="margin-top: 16px;">
-                        <i data-lucide="plus" class="lucide-sm"></i>
-                        Add Transaction
-                    </button>
-                </div>
-            `;
+                `;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            let html = '<div class="holdings-grid">';
+
+            for (const symbol in holdings) {
+                try {
+                    const holding = holdings[symbol];
+                    if (!holding) {
+                        console.warn(`Skipping null holding for ${symbol}`);
+                        continue;
+                    }
+
+                    console.log(`Processing holding for ${symbol}:`, holding);
+
+                    // INLINE safe number extraction - NO external function calls
+                    let totalQty = 0;
+                    let avgCost = 0;
+                    let totalCostBasis = 0;
+
+                    if (holding.totalQuantity != null) {
+                        totalQty = parseFloat(holding.totalQuantity);
+                        if (isNaN(totalQty)) totalQty = 0;
+                    }
+                    if (holding.averageCost != null) {
+                        avgCost = parseFloat(holding.averageCost);
+                        if (isNaN(avgCost)) avgCost = 0;
+                    }
+                    if (holding.totalCostBasis != null) {
+                        totalCostBasis = parseFloat(holding.totalCostBasis);
+                        if (isNaN(totalCostBasis)) totalCostBasis = 0;
+                    }
+
+                    const lots = Array.isArray(holding.lots) ? holding.lots : [];
+
+                    console.log(`  - totalQuantity: ${totalQty}`);
+                    console.log(`  - averageCost: ${avgCost}`);
+                    console.log(`  - totalCostBasis: ${totalCostBasis}`);
+                    console.log(`  - lots count: ${lots.length}`);
+
+                    // INLINE safe currency formatting - FULLY INLINE, NO FUNCTION CALLS
+                    const safeAvgCost = isNaN(avgCost) ? 0 : avgCost;
+                    const safeTotalCostBasis = isNaN(totalCostBasis) ? 0 : totalCostBasis;
+                    const avgCostFormatted = safeFormatCurrency(avgCost);
+                    const totalValueFormatted = safeFormatCurrency(totalCostBasis);
+
+                    html += `
+                        <div class="holding-card">
+                            <div class="holding-card-header">
+                                <div class="holding-symbol-badge">
+                                    <i data-lucide="trending-up" class="holding-icon"></i>
+                                    <span class="holding-symbol">${symbol}</span>
+                                </div>
+                                <div class="holding-shares">
+                                    <span class="shares-count">${totalQty}</span>
+                                    <span class="shares-label">shares</span>
+                                </div>
+                            </div>
+                            <div class="holding-card-body">
+                                <div class="holding-stat">
+                                    <span class="holding-stat-label">Avg. Cost</span>
+                                    <span class="holding-stat-value">${avgCostFormatted}</span>
+                                </div>
+                                <div class="holding-stat">
+                                    <span class="holding-stat-label">Total Value</span>
+                                    <span class="holding-stat-value accent">${totalValueFormatted}</span>
+                                </div>
+                            </div>
+                            <div class="holding-card-footer">
+                                <div class="holding-lots-count">
+                                    <i data-lucide="layers" class="lucide-sm"></i>
+                                    <span>${lots.length} lot${lots.length > 1 ? 's' : ''}</span>
+                                </div>
+                                <button class="holding-expand-btn" onclick="this.closest('.holding-card').classList.toggle('expanded')">
+                                    <span>Details</span>
+                                    <i data-lucide="chevron-down" class="lucide-sm"></i>
+                                </button>
+                            </div>
+                            <div class="holding-lots-detail">
+                                ${this.renderModernLotBreakdown(lots)}
+                            </div>
+                        </div>
+                    `;
+                } catch (holdingError) {
+                    console.error(`Error processing holding for ${symbol}:`, holdingError);
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
             // Re-render Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
-            return;
-        }
-
-        let html = '<div class="holdings-grid">';
-
-        for (const symbol in holdings) {
-            const holding = holdings[symbol];
-            const avgCostFormatted = this.formatCurrency(holding.averageCost);
-            const totalValueFormatted = this.formatCurrency(holding.totalCostBasis);
-
-            html += `
-                <div class="holding-card">
-                    <div class="holding-card-header">
-                        <div class="holding-symbol-badge">
-                            <i data-lucide="trending-up" class="holding-icon"></i>
-                            <span class="holding-symbol">${symbol}</span>
-                        </div>
-                        <div class="holding-shares">
-                            <span class="shares-count">${holding.totalQuantity.toLocaleString()}</span>
-                            <span class="shares-label">shares</span>
-                        </div>
-                    </div>
-                    <div class="holding-card-body">
-                        <div class="holding-stat">
-                            <span class="holding-stat-label">Avg. Cost</span>
-                            <span class="holding-stat-value">${avgCostFormatted}</span>
-                        </div>
-                        <div class="holding-stat">
-                            <span class="holding-stat-label">Total Value</span>
-                            <span class="holding-stat-value accent">${totalValueFormatted}</span>
-                        </div>
-                    </div>
-                    <div class="holding-card-footer">
-                        <div class="holding-lots-count">
-                            <i data-lucide="layers" class="lucide-sm"></i>
-                            <span>${holding.lots.length} lot${holding.lots.length > 1 ? 's' : ''}</span>
-                        </div>
-                        <button class="holding-expand-btn" onclick="this.closest('.holding-card').classList.toggle('expanded')">
-                            <span>Details</span>
-                            <i data-lucide="chevron-down" class="lucide-sm"></i>
-                        </button>
-                    </div>
-                    <div class="holding-lots-detail">
-                        ${this.renderModernLotBreakdown(holding.lots)}
-                    </div>
-                </div>
-            `;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-
-        // Re-render Lucide icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+        } catch (e) {
+            console.error('updateHoldingsDisplay crashed:', e);
         }
     }
 
     /**
-     * Render modern lot breakdown
+     * FAIL-SAFE RENDER LOT BREAKDOWN - Rewritten from scratch
+     * Guarantees: NEVER throws, ALWAYS returns valid HTML string
      */
     renderModernLotBreakdown(lots) {
-        if (!lots || lots.length === 0) return '';
+        // Gate 1: Invalid input returns empty string
+        if (!Array.isArray(lots) || lots.length === 0) return '';
 
+        // Local helper: Extract safe number from object
+        const safeNum = (obj, ...keys) => {
+            if (obj == null) return 0;
+            for (const key of keys) {
+                const val = obj[key];
+                if (val != null) {
+                    const n = +val;
+                    if (n === n && n !== Infinity && n !== -Infinity) return n;
+                }
+            }
+            return 0;
+        };
+
+        // Local helper: Format price without external calls
+        const fmtPrice = (n) => {
+            const rounded = Math.round(n * 100) / 100;
+            const parts = String(rounded).split('.');
+            return "Rs. " + parts[0] + "." + (parts[1] || '').padEnd(2, '0').slice(0, 2);
+        };
+
+        // Local helper: Format date safely
+        const fmtDate = (d) => {
+            if (d == null) return "N/A";
+            const date = d instanceof Date ? d : new Date(d);
+            if (isNaN(date.getTime())) return "N/A";
+            return date.toLocaleDateString();
+        };
+
+        // Build HTML
         let html = '<div class="lots-list">';
 
-        lots.forEach((lot, index) => {
-            const purchaseDate = this.formatDate(lot.purchaseDate);
-            const pricePerShare = this.formatCurrency(lot.pricePerShare);
+        for (let i = 0; i < lots.length; i++) {
+            const lot = lots[i];
+            if (lot == null) continue;
 
-            html += `
-                <div class="lot-item">
-                    <div class="lot-header">
-                        <span class="lot-number">Lot ${index + 1}</span>
-                        <span class="lot-date">${purchaseDate}</span>
-                    </div>
-                    <div class="lot-details">
-                        <div class="lot-detail">
-                            <span class="lot-qty">${lot.quantity}</span>
-                            <span class="lot-label">shares</span>
-                        </div>
-                        <div class="lot-detail">
-                            <span class="lot-price">${pricePerShare}</span>
-                            <span class="lot-label">per share</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
+            const price = safeNum(lot, 'price', 'cost', 'costPerShare', 'purchasePrice');
+            const qty = safeNum(lot, 'quantity', 'remainingQuantity');
+            const date = fmtDate(lot.purchaseDate);
+
+            html += '<div class="lot-item">' +
+                '<div class="lot-header">' +
+                '<span class="lot-number">Lot ' + (i + 1) + '</span>' +
+                '<span class="lot-date">' + date + '</span>' +
+                '</div>' +
+                '<div class="lot-details">' +
+                '<div class="lot-detail">' +
+                '<span class="lot-qty">' + qty + '</span>' +
+                '<span class="lot-label">shares</span>' +
+                '</div>' +
+                '<div class="lot-detail">' +
+                '<span class="lot-price">' + fmtPrice(price) + '</span>' +
+                '<span class="lot-label">per share</span>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        }
 
         html += '</div>';
         return html;
@@ -691,14 +848,21 @@ class PakistanStockTaxApp {
     updateTaxSummary() {
         const realizedGains = this.fifoQueue.getRealizedGains();
 
-        if (realizedGains.length === 0) {
-            document.getElementById('heroTaxLiability').textContent = 'Rs. 0.00';
-            document.getElementById('heroContextGains').textContent = 'Rs. 0.00';
-            document.getElementById('taxRateValue').textContent = '15%';
-            document.getElementById('heroCostBasis').textContent = 'Rs. 0.00';
-            document.getElementById('heroSaleProceeds').textContent = 'Rs. 0.00';
-            document.getElementById('heroNetGain').textContent = 'Rs. 0.00';
-            document.getElementById('heroYourTax').textContent = 'Rs. 0.00';
+        if (!realizedGains || realizedGains.length === 0) {
+            const el1 = document.getElementById('heroTaxLiability');
+            const el2 = document.getElementById('heroContextGains');
+            const el3 = document.getElementById('taxRateValue');
+            const el4 = document.getElementById('heroCostBasis');
+            const el5 = document.getElementById('heroSaleProceeds');
+            const el6 = document.getElementById('heroNetGain');
+            const el7 = document.getElementById('heroYourTax');
+            if (el1) el1.textContent = 'Rs. 0.00';
+            if (el2) el2.textContent = 'Rs. 0.00';
+            if (el3) el3.textContent = '15%';
+            if (el4) el4.textContent = 'Rs. 0.00';
+            if (el5) el5.textContent = 'Rs. 0.00';
+            if (el6) el6.textContent = 'Rs. 0.00';
+            if (el7) el7.textContent = 'Rs. 0.00';
             return;
         }
 
@@ -727,11 +891,17 @@ class PakistanStockTaxApp {
         this.animateNumber(heroGainsEl, netGain, 1000);
 
         // Update tax rate badge (secondary)
-        const effectiveTaxRate = netGain > 0
-            ? (totalTax / netGain) * 100
-            : 15;
-        document.getElementById('taxRateValue').textContent = `${(effectiveTaxRate || 15).toFixed(1)}%`;
-        document.getElementById('taxRateStatus').textContent = this.taxCalculator.isFiler ? '(Filer)' : '(Non-Filer)';
+        let effectiveTaxRate = 15;
+        if (netGain > 0 && totalTax >= 0) {
+            effectiveTaxRate = (totalTax / netGain) * 100;
+        }
+        if (isNaN(effectiveTaxRate) || !isFinite(effectiveTaxRate)) {
+            effectiveTaxRate = 15;
+        }
+        const taxRateEl = document.getElementById('taxRateValue');
+        if (taxRateEl) taxRateEl.textContent = `${effectiveTaxRate.toFixed(1)}%`;
+        const taxStatusEl = document.getElementById('taxRateStatus');
+        if (taxStatusEl) taxStatusEl.textContent = this.taxCalculator.isFiler ? '(Filer)' : '(Non-Filer)';
 
         // Update supporting metrics grid - with staggered counting animation
         this.animateStats([
@@ -894,7 +1064,7 @@ class PakistanStockTaxApp {
                             <span class="metric-value ${saleResult.capitalGain >= 0 ? 'gain' : 'loss'}">${saleResult.capitalGain >= 0 ? '+' : ''}${this.formatCurrency(saleResult.capitalGain)}</span>
                         </div>
                         <div class="simulator-metric highlight">
-                            <span class="metric-label">Tax @ ${taxCalc.effectiveTaxRate.toFixed(0)}%</span>
+                            <span class="metric-label">Tax @ ${((taxCalc.effectiveTaxRate || 0) * 100).toFixed(0)}%</span>
                             <span class="metric-value tax">${this.formatCurrency(taxCalc.totalTax)}</span>
                         </div>
                     </div>
@@ -952,8 +1122,9 @@ class PakistanStockTaxApp {
         const recommendations = [];
         const capitalGain = saleResult?.capitalGain || 0;
         const costBasis = saleResult?.totalCostBasis || 1;
-        const profitPercent = ((capitalGain / costBasis) * 100).toFixed(1);
-        const remainingShares = holding.totalQuantity - quantity;
+        const profitRatio = costBasis > 0 ? (capitalGain / costBasis) * 100 : 0;
+        const profitPercent = isNaN(profitRatio) || !isFinite(profitRatio) ? '0.0' : profitRatio.toFixed(1);
+        const remainingShares = (holding?.totalQuantity || 0) - quantity;
 
         // Recommendation 1: Profit/Loss advice
         if (capitalGain > 0) {
@@ -1401,11 +1572,12 @@ class PakistanStockTaxApp {
     }
 
     /**
-     * Format currency
+     * FAIL-SAFE FORMAT CURRENCY - Rewritten from scratch
+     * Guarantees: NEVER throws, ALWAYS returns a valid string
      */
-    formatCurrency(amount) {
-        return `Rs. ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-    }
+    formatCurrency(input) {
+    return safeFormatCurrency(input);
+}
 
     /**
      * Animate number counting effect
@@ -1415,18 +1587,26 @@ class PakistanStockTaxApp {
      * @param {string} prefix - Prefix to add before number (default: 'Rs. ')
      */
     animateNumber(element, endValue, duration = 1000, prefix = 'Rs. ') {
-        if (!element || typeof endValue !== 'number') return;
+        // Comprehensive validation - handle undefined, null, NaN, and non-numbers
+        if (!element) return;
+
+        // Convert to number and validate
+        const numValue = Number(endValue);
+        if (isNaN(numValue) || !isFinite(numValue)) {
+            element.textContent = prefix + '0.00';
+            return;
+        }
 
         // Check if user prefers reduced motion
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            element.textContent = prefix + endValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            element.textContent = prefix + numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             return;
         }
 
         const startValue = 0;
         const startTime = performance.now();
-        const isNegative = endValue < 0;
-        const absoluteEnd = Math.abs(endValue);
+        const isNegative = numValue < 0;
+        const absoluteEnd = Math.abs(numValue);
 
         const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
@@ -1454,9 +1634,11 @@ class PakistanStockTaxApp {
      * @param {number} staggerDelay - Delay between each animation (default: 100ms)
      */
     animateStats(stats, staggerDelay = 100) {
+        if (!stats || !Array.isArray(stats)) return;
         stats.forEach((stat, index) => {
+            if (!stat) return;
             setTimeout(() => {
-                this.animateNumber(stat.element, stat.value, 800, stat.prefix || 'Rs. ');
+                this.animateNumber(stat.element, stat.value || 0, 800, stat.prefix || 'Rs. ');
             }, index * staggerDelay);
         });
     }
@@ -1465,11 +1647,18 @@ class PakistanStockTaxApp {
      * Format date
      */
     formatDate(date) {
-        return new Date(date).toLocaleDateString('en-PK', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        if (!date) return 'N/A';
+        try {
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return 'Invalid Date';
+            return d.toLocaleDateString('en-PK', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return 'N/A';
+        }
     }
 
     /**

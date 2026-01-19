@@ -85,7 +85,20 @@ class FIFOQueue {
      * @private
      */
     _processBuy(transaction) {
-        const { symbol, quantity, price, settlementDate } = transaction;
+        // SAFE extraction of values
+        const symbol = transaction.symbol || '';
+        const quantity = Number(transaction.quantity) || 0;
+        const price = Number(transaction.price) || 0;
+        const settlementDate = transaction.settlementDate;
+
+        console.log('=== _processBuy ===');
+        console.log('Transaction received:', transaction);
+        console.log('Parsed - symbol:', symbol, 'quantity:', quantity, 'price:', price);
+
+        if (!symbol || quantity <= 0 || price <= 0) {
+            console.error('Invalid transaction data:', { symbol, quantity, price });
+            return;
+        }
 
         // Initialize holdings array for this symbol if it doesn't exist
         if (!this.holdings[symbol]) {
@@ -93,16 +106,23 @@ class FIFOQueue {
         }
 
         // Add new lot to the END of the queue (FIFO)
+        // EXPLICITLY include ALL fields to prevent undefined errors
         const lot = {
             quantity: quantity,
             price: price,
-            purchaseDate: settlementDate, // Use settlement date for holding period
+            cost: price,                          // Alias for price
+            costPerShare: price,                  // Another alias
+            purchasePrice: price,                 // Another alias
+            purchaseDate: settlementDate,
             remainingQuantity: quantity,
+            value: quantity * price,              // Pre-calculated value
+            tax: 0,                               // Default tax
             originalTransaction: transaction
         };
 
+        console.log('Created lot with ALL fields:', lot);
         this.holdings[symbol].push(lot);
-
+        console.log('Holdings after push:', this.holdings[symbol]);
         console.log(`✓ Added ${quantity} shares of ${symbol} @ Rs. ${price} to FIFO queue`);
     }
 
@@ -356,32 +376,80 @@ class FIFOQueue {
      * @returns {object} Holdings organized by symbol
      */
     getHoldings() {
+        console.log('=== getHoldings called ===');
+        console.log('Raw holdings:', JSON.stringify(this.holdings, null, 2));
+
         const summary = {};
 
         for (const symbol in this.holdings) {
             const lots = this.holdings[symbol];
-            const totalQuantity = lots.reduce((sum, lot) => sum + lot.remainingQuantity, 0);
+            console.log(`Processing ${symbol}, lots:`, lots);
+
+            if (!lots || !Array.isArray(lots)) {
+                console.log(`Skipping ${symbol} - lots is not an array`);
+                continue;
+            }
+
+            // Filter out invalid lots and calculate total with defensive checks
+            const validLots = lots.filter(lot => {
+                if (!lot) {
+                    console.log('Skipping null lot');
+                    return false;
+                }
+                const remainingQty = Number(lot.remainingQuantity);
+                if (isNaN(remainingQty) || remainingQty <= 0) {
+                    console.log('Skipping lot with invalid remainingQuantity:', lot.remainingQuantity);
+                    return false;
+                }
+                return true;
+            });
+
+            console.log(`Valid lots for ${symbol}:`, validLots.length);
+
+            const totalQuantity = validLots.reduce((sum, lot) => {
+                const qty = Number(lot.remainingQuantity) || 0;
+                return sum + qty;
+            }, 0);
+
+            console.log(`Total quantity for ${symbol}:`, totalQuantity);
 
             if (totalQuantity > 0) {
-                const totalValue = lots.reduce(
-                    (sum, lot) => sum + (lot.remainingQuantity * lot.price),
-                    0
-                );
+                const totalValue = validLots.reduce((sum, lot) => {
+                    const qty = Number(lot.remainingQuantity) || 0;
+                    const prc = Number(lot.price) || 0;
+                    return sum + (qty * prc);
+                }, 0);
+
+                const avgCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
 
                 summary[symbol] = {
                     totalQuantity: totalQuantity,
-                    averageCost: totalValue / totalQuantity,
+                    averageCost: avgCost,
                     totalCostBasis: totalValue,
-                    lots: lots.map(lot => ({
-                        quantity: lot.remainingQuantity,
-                        price: lot.price,
-                        purchaseDate: lot.purchaseDate,
-                        value: lot.remainingQuantity * lot.price
-                    }))
+                    lots: validLots.map(lot => {
+                        const qty = Number(lot.remainingQuantity) || 0;
+                        const prc = Number(lot.price) || 0;
+                        const val = qty * prc;
+                        // Return lot with ALL possible field names to prevent undefined
+                        return {
+                            quantity: qty,
+                            remainingQuantity: qty,
+                            price: prc,
+                            cost: prc,
+                            costPerShare: prc,
+                            purchasePrice: prc,
+                            purchaseDate: lot.purchaseDate,
+                            value: val,
+                            tax: 0
+                        };
+                    })
                 };
+
+                console.log(`Summary for ${symbol}:`, summary[symbol]);
             }
         }
 
+        console.log('Final summary:', summary);
         return summary;
     }
 
@@ -390,7 +458,7 @@ class FIFOQueue {
      * @returns {Array} Array of realized gain/loss records
      */
     getRealizedGains() {
-        return this.realizedGains;
+        return this.realizedGains || [];
     }
 
     /**
@@ -398,7 +466,7 @@ class FIFOQueue {
      * @returns {Array} Array of all transactions
      */
     getTransactions() {
-        return this.transactions;
+        return this.transactions || [];
     }
 
     /**

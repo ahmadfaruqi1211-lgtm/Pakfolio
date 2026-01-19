@@ -8,6 +8,18 @@
  * - Holding period affects tax treatment in some cases
  */
 
+// Safe number helper for tax calculator
+function _safeNum(value, defaultValue = 0) {
+    if (value === undefined || value === null) return defaultValue;
+    const num = Number(value);
+    if (isNaN(num) || !isFinite(num)) return defaultValue;
+    return num;
+}
+
+function _safeFixed(value, decimals = 2) {
+    return _safeNum(value, 0).toFixed(decimals);
+}
+
 class TaxCalculator {
     constructor() {
         // Cut-off date for new tax regime (July 1, 2024)
@@ -95,18 +107,44 @@ class TaxCalculator {
      * @returns {object} Tax calculation details
      */
     calculateTaxForSale(saleResult) {
+        if (!saleResult) {
+            console.error('calculateTaxForSale: saleResult is null/undefined');
+            return {
+                symbol: '',
+                quantitySold: 0,
+                saleProceeds: 0,
+                totalCostBasis: 0,
+                capitalGain: 0,
+                taxableGain: 0,
+                totalTax: 0,
+                netProfit: 0,
+                effectiveTaxRate: 0,
+                taxByLot: [],
+                saleDate: new Date(),
+                isFiler: this.isFiler
+            };
+        }
+
         const taxByLot = [];
         let totalTax = 0;
 
+        // Safely get lotsUsed
+        const lotsUsed = Array.isArray(saleResult.lotsUsed) ? saleResult.lotsUsed : [];
+
         // Calculate tax for each lot used in the sale
-        for (const lot of saleResult.lotsUsed) {
-            const taxRate = this.getTaxRate(
-                lot.purchaseDate,
-                lot.holdingPeriod.days
-            );
+        for (const lot of lotsUsed) {
+            if (!lot) continue;
+
+            const holdingDays = _safeNum(lot.holdingPeriod?.days, 0);
+            const taxRate = this.getTaxRate(lot.purchaseDate, holdingDays);
+
+            // SAFE number extraction
+            const sellPrice = _safeNum(saleResult.sellPrice, 0);
+            const costPerShare = _safeNum(lot.costPerShare, 0);
+            const quantity = _safeNum(lot.quantity, 0);
 
             // Calculate gain for this specific lot
-            const lotGain = (saleResult.sellPrice - lot.costPerShare) * lot.quantity;
+            const lotGain = (sellPrice - costPerShare) * quantity;
 
             // Tax only applies to gains (not losses)
             const taxableGain = Math.max(0, lotGain);
@@ -116,29 +154,30 @@ class TaxCalculator {
 
             taxByLot.push({
                 purchaseDate: lot.purchaseDate,
-                quantity: lot.quantity,
-                costPerShare: lot.costPerShare,
-                sellPrice: saleResult.sellPrice,
+                quantity: quantity,
+                costPerShare: costPerShare,
+                sellPrice: sellPrice,
                 gain: lotGain,
                 taxableGain: taxableGain,
                 taxRate: taxRate,
-                taxRatePercentage: (taxRate * 100).toFixed(2) + '%',
+                taxRatePercentage: _safeFixed(taxRate * 100, 2) + '%',
                 tax: lotTax,
-                holdingPeriod: lot.holdingPeriod
+                holdingPeriod: lot.holdingPeriod || { days: 0 }
             });
         }
 
+        const capitalGain = _safeNum(saleResult.capitalGain, 0);
+
         return {
-            symbol: saleResult.symbol,
-            quantitySold: saleResult.quantitySold,
-            saleProceeds: saleResult.saleProceeds,
-            totalCostBasis: saleResult.totalCostBasis,
-            capitalGain: saleResult.capitalGain,
-            taxableGain: Math.max(0, saleResult.capitalGain),
+            symbol: saleResult.symbol || '',
+            quantitySold: _safeNum(saleResult.quantitySold, 0),
+            saleProceeds: _safeNum(saleResult.saleProceeds, 0),
+            totalCostBasis: _safeNum(saleResult.totalCostBasis, 0),
+            capitalGain: capitalGain,
+            taxableGain: Math.max(0, capitalGain),
             totalTax: totalTax,
-            netProfit: saleResult.capitalGain - totalTax,
-            effectiveTaxRate: saleResult.capitalGain > 0 ?
-                (totalTax / saleResult.capitalGain) : 0,
+            netProfit: capitalGain - totalTax,
+            effectiveTaxRate: capitalGain > 0 ? (totalTax / capitalGain) : 0,
             taxByLot: taxByLot,
             saleDate: saleResult.saleDate,
             isFiler: this.isFiler
