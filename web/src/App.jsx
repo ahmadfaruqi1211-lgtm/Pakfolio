@@ -419,7 +419,42 @@ function SettingsScreen({ engine, persistSettings }) {
 
 export default function App() {
   const { engine, persist, persistSettings, refresh } = useAppEngine()
-  const [tab, setTab] = React.useState('home')
+
+  const parseTabFromUrl = React.useCallback(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const t = (params.get('tab') || '').toLowerCase()
+
+      if (t === 'add') return 'add'
+      if (t === 'portfolio') return 'portfolio'
+      if (t === 'holdings') return 'portfolio'
+      if (t === 'settings') return 'settings'
+      if (t === 'home') return 'home'
+      if (t === 'dashboard') return 'home'
+      if (t === 'tax') return 'home'
+
+      return 'home'
+    } catch {
+      return 'home'
+    }
+  }, [])
+
+  const [tab, setTab] = React.useState(() => (typeof window === 'undefined' ? 'home' : parseTabFromUrl()))
+
+  React.useEffect(() => {
+    const onPopState = () => setTab(parseTabFromUrl())
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [parseTabFromUrl])
+
+  const setTabAndUrl = React.useCallback((nextTab) => {
+    setTab(nextTab)
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', nextTab)
+      window.history.pushState({}, '', url)
+    } catch {}
+  }, [])
 
   if (!engine.ready) {
     return (
@@ -447,16 +482,16 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800">
         <div className="mx-auto max-w-md grid grid-cols-4 px-2 py-2 text-xs text-slate-300">
-          <TabButton active={tab === 'home'} onClick={() => setTab('home')}>
+          <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')}>
             Home
           </TabButton>
-          <TabButton active={tab === 'add'} onClick={() => setTab('add')}>
+          <TabButton active={tab === 'add'} onClick={() => setTabAndUrl('add')}>
             Add
           </TabButton>
-          <TabButton active={tab === 'portfolio'} onClick={() => setTab('portfolio')}>
+          <TabButton active={tab === 'portfolio'} onClick={() => setTabAndUrl('portfolio')}>
             Portfolio
           </TabButton>
-          <TabButton active={tab === 'settings'} onClick={() => setTab('settings')}>
+          <TabButton active={tab === 'settings'} onClick={() => setTabAndUrl('settings')}>
             Settings
           </TabButton>
         </div>
