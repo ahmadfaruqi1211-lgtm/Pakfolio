@@ -1028,3 +1028,7 @@ class WhatIfScenarios {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = WhatIfScenarios;
 }
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.WhatIfScenarios = WhatIfScenarios;
+}

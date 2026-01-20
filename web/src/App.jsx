@@ -417,6 +417,163 @@ function SettingsScreen({ engine, persistSettings }) {
   )
 }
 
+function WhatIfScreen({ engine }) {
+  const [symbol, setSymbol] = React.useState('')
+  const [quantity, setQuantity] = React.useState('')
+  const [price, setPrice] = React.useState('')
+  const [date, setDate] = React.useState(todayISO())
+  const [result, setResult] = React.useState(null)
+  const [error, setError] = React.useState(null)
+
+  const s = (symbol || '').trim().toUpperCase()
+  const q = Number(quantity || 0)
+  const p = Number(price || 0)
+
+  const run = (mode) => {
+    setError(null)
+    setResult(null)
+
+    const ok = typeof window !== 'undefined' && window.WhatIfScenarios
+    if (!ok) {
+      setError('What-If engine not detected')
+      return
+    }
+
+    if (!s) return setError('Enter a symbol')
+    if (q <= 0) return setError('Enter a valid quantity')
+    if (p <= 0) return setError('Enter a valid price')
+
+    try {
+      const whatIf = new window.WhatIfScenarios(engine.fifoQueue, engine.taxCalculator)
+
+      if (mode === 'timing') {
+        const r = whatIf.analyzeOptimalTiming(s, q, p)
+        setResult({ mode, r })
+        return
+      }
+
+      if (mode === 'filer') {
+        const sale = engine.fifoQueue.calculateSale(s, q, p, date)
+        const r = whatIf.compareFilerStatus(sale)
+        setResult({ mode, r })
+        return
+      }
+
+      setError('Unknown scenario')
+    } catch (e) {
+      setError(e?.message || 'Failed to run scenario')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card title="What-If Scenarios" subtitle="Simulate trades without saving">
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-slate-400">Symbol</label>
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              placeholder="e.g., OGDC"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-slate-400">Quantity</label>
+              <input
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                placeholder="100"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">Price</label>
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                placeholder="100.00"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400">Trade Date (for filer comparison)</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+            />
+          </div>
+
+          {error ? (
+            <div className="rounded-xl px-3 py-2 text-sm border bg-rose-500/10 border-rose-500/30 text-rose-300">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => run('timing')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            >
+              Timing
+            </button>
+            <button
+              type="button"
+              onClick={() => run('filer')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            >
+              Filer Compare
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      {result && result.mode === 'timing' ? (
+        <Card title="Timing Analysis" subtitle={result.r?.recommendation || ''}>
+          <div className="space-y-2 text-sm">
+            {(result.r?.scenarios || []).map((sc) => (
+              <div key={sc.scenario} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-slate-100">{sc.scenario}</div>
+                  <div className="text-slate-300">{formatPKR(sc.tax)}</div>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">Net: {formatPKR(sc.netProfit)}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {result && result.mode === 'filer' ? (
+        <Card title="Filer vs Non-Filer" subtitle={result.r?.recommendation || ''}>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+              <div className="text-xs text-slate-500">Filer Tax</div>
+              <div className="text-slate-100 font-semibold">{formatPKR(result.r?.filer?.tax || 0)}</div>
+              <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.filer?.netProfit || 0)}</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+              <div className="text-xs text-slate-500">Non-Filer Tax</div>
+              <div className="text-slate-100 font-semibold">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
+              <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.nonFiler?.netProfit || 0)}</div>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-slate-300">
+            Savings by being filer: <span className="text-emerald-400 font-semibold">{formatPKR(result.r?.savingsByBeingFiler || 0)}</span>
+          </div>
+        </Card>
+      ) : null}
+    </div>
+  )
+}
+
 export default function App() {
   const { engine, persist, persistSettings, refresh } = useAppEngine()
 
@@ -429,6 +586,8 @@ export default function App() {
       if (t === 'portfolio') return 'portfolio'
       if (t === 'holdings') return 'portfolio'
       if (t === 'settings') return 'settings'
+      if (t === 'whatif') return 'whatif'
+      if (t === 'what-if') return 'whatif'
       if (t === 'home') return 'home'
       if (t === 'dashboard') return 'home'
       if (t === 'tax') return 'home'
@@ -469,7 +628,15 @@ export default function App() {
       <header className="px-4 pt-6 pb-4">
         <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
         <div className="text-xl font-bold tracking-tight">
-          {tab === 'home' ? 'Dashboard' : tab === 'add' ? 'Add' : tab === 'portfolio' ? 'Portfolio' : 'Settings'}
+          {tab === 'home'
+            ? 'Dashboard'
+            : tab === 'add'
+              ? 'Add'
+              : tab === 'portfolio'
+                ? 'Portfolio'
+                : tab === 'whatif'
+                  ? 'What-If'
+                  : 'Settings'}
         </div>
       </header>
 
@@ -477,11 +644,12 @@ export default function App() {
         {tab === 'home' ? <DashboardScreen engine={engine} /> : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? <PortfolioScreen engine={engine} /> : null}
+        {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} /> : null}
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800">
-        <div className="mx-auto max-w-md grid grid-cols-4 px-2 py-2 text-xs text-slate-300">
+        <div className="mx-auto max-w-md grid grid-cols-5 px-2 py-2 text-xs text-slate-300">
           <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')}>
             Home
           </TabButton>
@@ -490,6 +658,9 @@ export default function App() {
           </TabButton>
           <TabButton active={tab === 'portfolio'} onClick={() => setTabAndUrl('portfolio')}>
             Portfolio
+          </TabButton>
+          <TabButton active={tab === 'whatif'} onClick={() => setTabAndUrl('whatif')}>
+            What-If
           </TabButton>
           <TabButton active={tab === 'settings'} onClick={() => setTabAndUrl('settings')}>
             Settings

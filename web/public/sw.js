@@ -14,7 +14,8 @@ self.addEventListener('install', (event) => {
         '/icons/favicon.svg',
         '/js/fifo-engine.js',
         '/js/tax-calculator.js',
-        '/js/storage-manager.js'
+        '/js/storage-manager.js',
+        '/js/what-if-scenarios.js'
       ]
 
       try {
