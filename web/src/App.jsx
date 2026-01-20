@@ -89,6 +89,431 @@ function Card({ title, subtitle, children }) {
   )
 }
 
+function TaxReportScreen({ engine }) {
+  const realized = engine.fifoQueue.getRealizedGains() || []
+  const transactions = engine.fifoQueue.getTransactions() || []
+
+  let totalSales = realized.length
+  let totalGain = 0
+  let totalTax = 0
+
+  for (const sale of realized) {
+    totalGain += Number(sale.capitalGain || 0)
+    const t = engine.taxCalculator.calculateTaxForSale(sale)
+    totalTax += Number(t.totalTax || 0)
+  }
+
+  const exportPdf = () => {
+    try {
+      if (typeof window === 'undefined' || !window.PDFGenerator) {
+        alert('PDF Generator not available')
+        return
+      }
+      if (typeof window.jspdf === 'undefined') {
+        alert('jsPDF library not loaded')
+        return
+      }
+      const pdf = new window.PDFGenerator()
+      pdf.generateTaxReport(engine.fifoQueue, engine.taxCalculator, transactions)
+    } catch (e) {
+      alert(e?.message || 'Failed to export PDF')
+    }
+  }
+
+  const exportJson = () => {
+    engine.storageManager.exportToFile(engine.fifoQueue.exportData())
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card title="Tax Summary" subtitle={engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}>
+        <div className="grid grid-cols-3 gap-2 text-sm">
+          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="text-xs text-slate-500">Sales</div>
+            <div className="text-slate-100 font-semibold">{totalSales}</div>
+          </div>
+          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="text-xs text-slate-500">Total Gain</div>
+            <div className={totalGain >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+              {formatPKR(totalGain)}
+            </div>
+          </div>
+          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="text-xs text-slate-500">Tax Payable</div>
+            <div className="text-rose-300 font-semibold">{formatPKR(totalTax)}</div>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={exportPdf}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            Export PDF
+          </button>
+          <button
+            type="button"
+            onClick={exportJson}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            Export JSON
+          </button>
+        </div>
+      </Card>
+
+      <Card title="Realized Sales" subtitle="FIFO sale breakdown">
+        <div className="space-y-2">
+          {realized.length === 0 ? (
+            <div className="text-sm text-slate-400">No sales recorded yet.</div>
+          ) : (
+            realized
+              .slice()
+              .reverse()
+              .map((sale, idx) => {
+                const tax = engine.taxCalculator.calculateTaxForSale(sale)
+                const soldQty = Number(sale.quantitySold || 0)
+                return (
+                  <div key={idx} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-slate-100">{sale.symbol}</div>
+                      <div className="text-slate-300">{formatNumber(soldQty)} sh</div>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">Date: {String(sale.saleDate || '').slice(0, 10)}</div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <div className="text-slate-500">Gain</div>
+                        <div
+                          className={
+                            Number(sale.capitalGain || 0) >= 0
+                              ? 'text-emerald-400 font-semibold'
+                              : 'text-rose-400 font-semibold'
+                          }
+                        >
+                          {formatPKR(sale.capitalGain || 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">Tax</div>
+                        <div className="text-slate-100 font-semibold">{formatPKR(tax.totalTax || 0)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">Net</div>
+                        <div className="text-slate-100 font-semibold">{formatPKR(tax.netProfit || 0)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function TransactionHistoryScreen({ engine }) {
+  const txns = engine.fifoQueue.getTransactions() || []
+  const [filter, setFilter] = React.useState('')
+
+  const f = (filter || '').trim().toUpperCase()
+  const filtered = txns
+    .filter((t) => (!f ? true : String(t.symbol || '').toUpperCase().includes(f)))
+    .slice()
+    .sort((a, b) => new Date(b.timestamp || b.tradeDate || 0) - new Date(a.timestamp || a.tradeDate || 0))
+
+  return (
+    <div className="space-y-4">
+      <Card title="Transaction History" subtitle="All buys and sells">
+        <div className="space-y-3">
+          <input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+            placeholder="Filter by symbol (e.g., OGDC)"
+          />
+          <div className="text-xs text-slate-500">{filtered.length} transactions</div>
+        </div>
+      </Card>
+
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <Card title="No transactions" subtitle="">
+            <div className="text-sm text-slate-400">Nothing to show.</div>
+          </Card>
+        ) : (
+          filtered.map((t, idx) => (
+            <div key={idx} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+              <div className="flex items-center justify-between">
+                <div className="font-bold tracking-tight">{String(t.symbol || '').toUpperCase()}</div>
+                <div className={t.type === 'SELL' ? 'text-rose-300 font-semibold' : 'text-emerald-300 font-semibold'}>
+                  {t.type}
+                </div>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <div className="text-slate-500">Qty</div>
+                  <div className="text-slate-100 font-semibold">{formatNumber(t.quantity || 0)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Price</div>
+                  <div className="text-slate-100 font-semibold">{formatPKR(t.price || 0)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Date</div>
+                  <div className="text-slate-100 font-semibold">{String(t.tradeDate || '').slice(0, 10)}</div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CorporateActionsScreen({ engine, persist, onChanged }) {
+  const [symbol, setSymbol] = React.useState('')
+  const [actionType, setActionType] = React.useState('BONUS')
+  const [ratio, setRatio] = React.useState('')
+  const [exDate, setExDate] = React.useState(todayISO())
+  const [rightPrice, setRightPrice] = React.useState('')
+  const [subscriptionDate, setSubscriptionDate] = React.useState('')
+  const [message, setMessage] = React.useState(null)
+
+  const manager = React.useMemo(() => {
+    if (typeof window === 'undefined' || !window.CorporateActionsManager) return null
+    return new window.CorporateActionsManager(engine.fifoQueue, engine.storageManager)
+  }, [engine])
+
+  const actions = manager ? manager.getCorporateActions() : []
+
+  const apply = () => {
+    setMessage(null)
+    if (!manager) return setMessage({ kind: 'error', text: 'Corporate Actions engine not detected' })
+
+    const s = (symbol || '').trim().toUpperCase()
+    if (!s) return setMessage({ kind: 'error', text: 'Enter a symbol' })
+    if (!exDate) return setMessage({ kind: 'error', text: 'Enter an ex-date' })
+
+    try {
+      if (actionType === 'BONUS') {
+        manager.applyCorporateAction(s, 'BONUS', { ratio, exDate })
+      } else {
+        if (!rightPrice) return setMessage({ kind: 'error', text: 'Enter right price' })
+        const details = { ratio, price: Number(rightPrice || 0), exDate }
+        if (subscriptionDate) details.subscriptionDate = subscriptionDate
+        manager.applyCorporateAction(s, 'RIGHT', details)
+      }
+
+      persist()
+      onChanged()
+      setMessage({ kind: 'ok', text: 'Corporate action applied' })
+    } catch (e) {
+      setMessage({ kind: 'error', text: e?.message || 'Failed to apply corporate action' })
+    }
+  }
+
+  const undo = (id) => {
+    if (!manager) return
+    try {
+      manager.reverseCorporateAction(id)
+      persist()
+      onChanged()
+    } catch (e) {
+      setMessage({ kind: 'error', text: e?.message || 'Failed to undo' })
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card title="Apply Corporate Action" subtitle="Bonus shares and right issues">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setActionType('BONUS')}
+              className={
+                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
+                (actionType === 'BONUS'
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+              }
+            >
+              Bonus
+            </button>
+            <button
+              type="button"
+              onClick={() => setActionType('RIGHT')}
+              className={
+                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
+                (actionType === 'RIGHT'
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+              }
+            >
+              Right
+            </button>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400">Symbol</label>
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              placeholder="e.g., HBL"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-slate-400">Ratio</label>
+              <input
+                value={ratio}
+                onChange={(e) => setRatio(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                placeholder={actionType === 'BONUS' ? 'e.g., 20% or 0.2' : 'e.g., 1:5'}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">Ex-Date</label>
+              <input
+                type="date"
+                value={exDate}
+                onChange={(e) => setExDate(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          {actionType === 'RIGHT' ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-slate-400">Right Price</label>
+                <input
+                  value={rightPrice}
+                  onChange={(e) => setRightPrice(e.target.value)}
+                  className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                  placeholder="e.g., 10"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Subscription Date (optional)</label>
+                <input
+                  type="date"
+                  value={subscriptionDate}
+                  onChange={(e) => setSubscriptionDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {message ? (
+            <div
+              className={
+                'rounded-xl px-3 py-2 text-sm border ' +
+                (message.kind === 'ok'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300')
+              }
+            >
+              {message.text}
+            </div>
+          ) : null}
+
+          <button type="button" onClick={apply} className="w-full rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2.5">
+            Apply
+          </button>
+        </div>
+      </Card>
+
+      <Card title="History" subtitle="Applied corporate actions">
+        <div className="space-y-2">
+          {actions.length === 0 ? (
+            <div className="text-sm text-slate-400">No corporate actions recorded yet.</div>
+          ) : (
+            actions
+              .slice()
+              .reverse()
+              .map((a) => (
+                <div key={a.id} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold text-slate-100">
+                      {a.type} {a.symbol}
+                    </div>
+                    <div className={a.applied ? 'text-emerald-300 font-semibold' : 'text-slate-400'}>
+                      {a.applied ? 'Applied' : 'Undone'}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Ex-Date: {String(a.exDate || '').slice(0, 10)}
+                  </div>
+                  {a.applied ? (
+                    <button
+                      type="button"
+                      onClick={() => undo(a.id)}
+                      className="mt-2 rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-100"
+                    >
+                      Undo
+                    </button>
+                  ) : null}
+                </div>
+              ))
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function MoreScreen({ engine, setTabAndUrl }) {
+  return (
+    <div className="space-y-4">
+      <Card title="Reports" subtitle="Tax and history">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setTabAndUrl('tax')}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            Tax Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabAndUrl('history')}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            History
+          </button>
+        </div>
+      </Card>
+
+      <Card title="Portfolio Tools" subtitle="Adjust cost basis">
+        <button
+          type="button"
+          onClick={() => setTabAndUrl('corporate')}
+          className="w-full rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+        >
+          Corporate Actions
+        </button>
+      </Card>
+
+      <Card title="Settings" subtitle="Tax status and data">
+        <button
+          type="button"
+          onClick={() => setTabAndUrl('settings')}
+          className="w-full rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+        >
+          Open Settings
+        </button>
+        <div className="mt-2 text-xs text-slate-500">Current: {engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}</div>
+      </Card>
+    </div>
+  )
+}
+
 function DashboardScreen({ engine }) {
   const holdings = engine.fifoQueue.getHoldings()
   const realizedGains = engine.fifoQueue.getRealizedGains()
@@ -585,12 +1010,16 @@ export default function App() {
       if (t === 'add') return 'add'
       if (t === 'portfolio') return 'portfolio'
       if (t === 'holdings') return 'portfolio'
+      if (t === 'tax') return 'tax'
+      if (t === 'history') return 'history'
+      if (t === 'corporate') return 'corporate'
+      if (t === 'actions') return 'corporate'
       if (t === 'settings') return 'settings'
       if (t === 'whatif') return 'whatif'
       if (t === 'what-if') return 'whatif'
+      if (t === 'more') return 'more'
       if (t === 'home') return 'home'
       if (t === 'dashboard') return 'home'
-      if (t === 'tax') return 'home'
 
       return 'home'
     } catch {
@@ -636,7 +1065,15 @@ export default function App() {
                 ? 'Portfolio'
                 : tab === 'whatif'
                   ? 'What-If'
-                  : 'Settings'}
+                  : tab === 'tax'
+                    ? 'Tax Report'
+                    : tab === 'history'
+                      ? 'History'
+                      : tab === 'corporate'
+                        ? 'Corporate Actions'
+                        : tab === 'more'
+                          ? 'More'
+                          : 'Settings'}
         </div>
       </header>
 
@@ -645,6 +1082,10 @@ export default function App() {
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? <PortfolioScreen engine={engine} /> : null}
         {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
+        {tab === 'tax' ? <TaxReportScreen engine={engine} /> : null}
+        {tab === 'history' ? <TransactionHistoryScreen engine={engine} /> : null}
+        {tab === 'corporate' ? <CorporateActionsScreen engine={engine} persist={persist} onChanged={refresh} /> : null}
+        {tab === 'more' ? <MoreScreen engine={engine} setTabAndUrl={setTabAndUrl} /> : null}
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} /> : null}
       </main>
 
@@ -662,8 +1103,8 @@ export default function App() {
           <TabButton active={tab === 'whatif'} onClick={() => setTabAndUrl('whatif')}>
             What-If
           </TabButton>
-          <TabButton active={tab === 'settings'} onClick={() => setTabAndUrl('settings')}>
-            Settings
+          <TabButton active={tab === 'more'} onClick={() => setTabAndUrl('more')}>
+            More
           </TabButton>
         </div>
       </nav>

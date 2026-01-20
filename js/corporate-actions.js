@@ -642,3 +642,7 @@ class CorporateActionsManager {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CorporateActionsManager;
 }
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.CorporateActionsManager = CorporateActionsManager;
+}

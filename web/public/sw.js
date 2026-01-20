@@ -15,7 +15,9 @@ self.addEventListener('install', (event) => {
         '/js/fifo-engine.js',
         '/js/tax-calculator.js',
         '/js/storage-manager.js',
-        '/js/what-if-scenarios.js'
+        '/js/what-if-scenarios.js',
+        '/js/pdf-generator.js',
+        '/js/corporate-actions.js'
       ]
 
       try {

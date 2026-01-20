@@ -576,3 +576,7 @@ class PDFGenerator {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = PDFGenerator;
 }
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.PDFGenerator = PDFGenerator;
+}
