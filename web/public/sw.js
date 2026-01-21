@@ -1,7 +1,7 @@
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      const CACHE_NAME = `pakfolio-cache-v1`
+      const CACHE_NAME = `pakfolio-cache-v2`
       const cache = await caches.open(CACHE_NAME)
 
       const core = [
@@ -42,10 +42,17 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      const keep = new Set(['pakfolio-cache-v1'])
+      const keep = new Set(['pakfolio-cache-v2'])
       const keys = await caches.keys()
       await Promise.all(keys.map((k) => (keep.has(k) ? Promise.resolve() : caches.delete(k))))
       await self.clients.claim()
+
+      try {
+        const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        for (const client of clients) {
+          client.postMessage({ type: 'SW_UPDATED' })
+        }
+      } catch {}
     })()
   )
 })
@@ -57,7 +64,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url)
   if (url.origin !== self.location.origin) return
 
-  const cacheName = 'pakfolio-cache-v1'
+  const cacheName = 'pakfolio-cache-v2'
 
   const isNavigate = req.mode === 'navigate'
   const isAsset = url.pathname.startsWith('/assets/')
