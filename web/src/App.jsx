@@ -514,9 +514,27 @@ function MoreScreen({ engine, setTabAndUrl }) {
   )
 }
 
-function DashboardScreen({ engine }) {
+function StatTile({ label, value, subValue, tone = 'slate' }) {
+  const toneMap = {
+    slate: 'text-slate-100',
+    emerald: 'text-emerald-300',
+    rose: 'text-rose-300',
+    amber: 'text-amber-300'
+  }
+
+  return (
+    <div className="rounded-2xl bg-slate-950/30 border border-slate-800 p-4 shadow-sm">
+      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={'mt-1 text-lg font-bold tracking-tight ' + (toneMap[tone] || toneMap.slate)}>{value}</div>
+      {subValue ? <div className="mt-1 text-xs text-slate-400">{subValue}</div> : null}
+    </div>
+  )
+}
+
+function DashboardScreen({ engine, setTabAndUrl }) {
   const holdings = engine.fifoQueue.getHoldings()
   const realizedGains = engine.fifoQueue.getRealizedGains()
+  const txns = engine.fifoQueue.getTransactions ? engine.fifoQueue.getTransactions() : []
 
   let totalHoldingsQty = 0
   let totalHoldingsCost = 0
@@ -535,37 +553,99 @@ function DashboardScreen({ engine }) {
   }
 
   const effectiveRate = netGains > 0 ? (totalTax / netGains) * 100 : 0
+  const filerLabel = engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'
+  const hasAnyData = (txns || []).length > 0 || Object.keys(holdings || {}).length > 0
 
   return (
     <div className="space-y-4">
-      <Card title="Tax Liability" subtitle={engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}>
-        <div className="text-2xl font-bold tracking-tight">{formatPKR(totalTax)}</div>
-        <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-            <div className="text-slate-400 text-xs">Realized Gains</div>
-            <div className={netGains >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
-              {formatPKR(netGains)}
+      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/70 via-slate-950/60 to-slate-900/50 p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs text-slate-400">Tax payable (estimated)</div>
+            <div className="mt-1 text-3xl font-extrabold tracking-tight text-slate-50">{formatPKR(totalTax)}</div>
+            <div className="mt-2 inline-flex items-center rounded-full border border-slate-700 bg-slate-950/30 px-2.5 py-1 text-xs text-slate-300">
+              Status: <span className={engine.taxCalculator.isFiler ? 'ml-1 text-emerald-300 font-semibold' : 'ml-1 text-rose-300 font-semibold'}>{filerLabel}</span>
             </div>
           </div>
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-            <div className="text-slate-400 text-xs">Effective Rate</div>
-            <div className="text-slate-100 font-semibold">{formatNumber(effectiveRate)}%</div>
-          </div>
-        </div>
-      </Card>
 
-      <Card title="Holdings" subtitle="Remaining lots">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-            <div className="text-slate-400 text-xs">Total Shares</div>
-            <div className="text-slate-100 font-semibold">{formatNumber(totalHoldingsQty)}</div>
-          </div>
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-            <div className="text-slate-400 text-xs">Total Cost</div>
-            <div className="text-slate-100 font-semibold">{formatPKR(totalHoldingsCost)}</div>
+          <button
+            type="button"
+            onClick={() => setTabAndUrl('tax')}
+            className="rounded-2xl bg-emerald-500 text-emerald-950 font-bold px-4 py-2 text-sm shadow-sm hover:brightness-110 active:brightness-95"
+          >
+            View Report
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile
+            label="Realized Gains"
+            value={formatPKR(netGains)}
+            tone={netGains >= 0 ? 'emerald' : 'rose'}
+            subValue={(realizedGains || []).length ? `${(realizedGains || []).length} sales` : 'No sales yet'}
+          />
+          <StatTile label="Effective Rate" value={`${formatNumber(effectiveRate)}%`} subValue={netGains > 0 ? 'Tax / gain' : 'N/A'} tone={effectiveRate > 0 ? 'amber' : 'slate'} />
+          <StatTile label="Total Shares" value={formatNumber(totalHoldingsQty)} subValue="Across all symbols" />
+          <StatTile label="Total Cost" value={formatPKR(totalHoldingsCost)} subValue="Cost basis" />
+        </div>
+      </div>
+
+      {!hasAnyData ? (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+          <div className="text-sm font-semibold text-slate-100">Get started</div>
+          <div className="mt-1 text-sm text-slate-400">Add your first BUY transaction to see holdings and tax insights.</div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('add')}
+              className="rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2 text-sm"
+            >
+              Add Transaction
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('portfolio')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            >
+              View Portfolio
+            </button>
           </div>
         </div>
-      </Card>
+      ) : (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+          <div className="text-sm font-semibold text-slate-100">Quick actions</div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('add')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('history')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+            >
+              History
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('corporate')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+            >
+              Actions
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('whatif')}
+              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+            >
+              What-If
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1078,7 +1158,7 @@ export default function App() {
       </header>
 
       <main className="flex-1 px-4 pb-24">
-        {tab === 'home' ? <DashboardScreen engine={engine} /> : null}
+        {tab === 'home' ? <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} /> : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? <PortfolioScreen engine={engine} /> : null}
         {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
