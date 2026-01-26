@@ -158,8 +158,24 @@ function TabButton({ active, children, onClick }) {
     <button
       onClick={onClick}
       className={
-        'py-2 rounded-xl transition-colors ' +
+        'py-2 rounded-xl transition-all active:scale-[0.98] ' +
         (active ? 'bg-slate-900 text-slate-50' : 'text-slate-300 hover:bg-slate-900')
+      }
+    >
+      {children}
+    </button>
+  )
+}
+
+function PrimaryTabButton({ active, children, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        'py-2 rounded-2xl transition-all active:scale-[0.98] font-bold shadow-sm ' +
+        (active
+          ? 'bg-emerald-500 text-emerald-950'
+          : 'bg-emerald-500/90 text-emerald-950 hover:brightness-110')
       }
     >
       {children}
@@ -581,13 +597,22 @@ function MoreScreen({ engine, setTabAndUrl }) {
       </Card>
 
       <Card title="Portfolio Tools" subtitle="Adjust cost basis">
-        <button
-          type="button"
-          onClick={() => setTabAndUrl('corporate')}
-          className="w-full rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
-        >
-          Corporate Actions
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setTabAndUrl('corporate')}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            Corporate Actions
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabAndUrl('whatif')}
+            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          >
+            What-If
+          </button>
+        </div>
       </Card>
 
       <Card title="Settings" subtitle="Tax status and data">
@@ -728,10 +753,10 @@ function DashboardScreen({ engine, setTabAndUrl }) {
             </button>
             <button
               type="button"
-              onClick={() => setTabAndUrl('whatif')}
+              onClick={() => setTabAndUrl('settings')}
               className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
             >
-              What-If
+              Settings
             </button>
           </div>
         </div>
@@ -740,7 +765,75 @@ function DashboardScreen({ engine, setTabAndUrl }) {
   )
 }
 
-function PortfolioScreen({ engine }) {
+function PortfolioScreen({ engine, onRefresh }) {
+  const [pull, setPull] = React.useState(0)
+  const [refreshing, setRefreshing] = React.useState(false)
+  const startYRef = React.useRef(null)
+  const pullingRef = React.useRef(false)
+  const pullRef = React.useRef(0)
+  const refreshingRef = React.useRef(false)
+
+  const setPullSafe = React.useCallback((v) => {
+    pullRef.current = v
+    setPull(v)
+  }, [])
+
+  const setRefreshingSafe = React.useCallback((v) => {
+    refreshingRef.current = v
+    setRefreshing(v)
+  }, [])
+
+  React.useEffect(() => {
+    const onTouchStart = (e) => {
+      if (refreshingRef.current) return
+      if (window.scrollY !== 0) return
+      const y = e.touches?.[0]?.clientY
+      if (!y) return
+      startYRef.current = y
+      pullingRef.current = true
+    }
+
+    const onTouchMove = (e) => {
+      if (!pullingRef.current) return
+      const y = e.touches?.[0]?.clientY
+      if (!y || startYRef.current == null) return
+      const dy = y - startYRef.current
+      if (dy <= 0) return
+      setPullSafe(Math.min(dy, 90))
+    }
+
+    const onTouchEnd = () => {
+      if (!pullingRef.current) return
+      pullingRef.current = false
+      startYRef.current = null
+
+      const v = pullRef.current
+      if (v >= 70 && typeof onRefresh === 'function') {
+        setRefreshingSafe(true)
+        setPullSafe(70)
+        try {
+          onRefresh()
+        } catch {}
+        window.setTimeout(() => {
+          setRefreshingSafe(false)
+          setPullSafe(0)
+        }, 700)
+        return
+      }
+
+      setPullSafe(0)
+    }
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchend', onTouchEnd)
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [onRefresh, setPullSafe, setRefreshingSafe])
+
   const holdings = engine.fifoQueue.getHoldings()
   const symbols = Object.keys(holdings || {}).sort()
 
@@ -754,6 +847,17 @@ function PortfolioScreen({ engine }) {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-center" style={{ height: pull ? Math.max(16, pull) : 0, transition: 'height 120ms ease-out' }}>
+        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/40 px-3 py-1 text-xs text-slate-300">
+          <div
+            className={
+              'h-4 w-4 rounded-full border-2 border-slate-600 border-t-emerald-400 ' +
+              (refreshing ? 'animate-spin' : '')
+            }
+          />
+          <span>{refreshing ? 'Refreshing…' : pull >= 70 ? 'Release to refresh' : 'Pull to refresh'}</span>
+        </div>
+      </div>
       {symbols.map((sym) => {
         const h = holdings[sym]
         const qty = Number(h?.totalQuantity || 0)
@@ -820,6 +924,11 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
       engine.fifoQueue.addTransaction(type, s, q, p, date)
       persist()
       setMessage({ kind: 'ok', text: `${type} saved for ${s}` })
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          navigator.vibrate(15)
+        }
+      } catch {}
       setQuantity('')
       setPrice('')
       onSaved()
@@ -1239,8 +1348,8 @@ export default function App() {
             ? 'Dashboard'
             : tab === 'add'
               ? 'Add'
-              : tab === 'portfolio'
-                ? 'Portfolio'
+            : tab === 'portfolio'
+                ? 'Holdings'
                 : tab === 'whatif'
                   ? 'What-If'
                   : tab === 'tax'
@@ -1258,7 +1367,7 @@ export default function App() {
       <main className="flex-1 px-4 pb-24">
         {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} />) : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
-        {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} />) : null}
+        {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} onRefresh={refresh} />) : null}
         {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
         {tab === 'tax' ? <TaxReportScreen engine={engine} /> : null}
         {tab === 'history' ? (hydrating ? <HistorySkeleton /> : <TransactionHistoryScreen engine={engine} />) : null}
@@ -1267,19 +1376,19 @@ export default function App() {
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} /> : null}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800">
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-md grid grid-cols-5 px-2 py-2 text-xs text-slate-300">
           <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')}>
             Home
           </TabButton>
-          <TabButton active={tab === 'add'} onClick={() => setTabAndUrl('add')}>
-            Add
-          </TabButton>
           <TabButton active={tab === 'portfolio'} onClick={() => setTabAndUrl('portfolio')}>
-            Portfolio
+            Holdings
           </TabButton>
-          <TabButton active={tab === 'whatif'} onClick={() => setTabAndUrl('whatif')}>
-            What-If
+          <PrimaryTabButton active={tab === 'add'} onClick={() => setTabAndUrl('add')}>
+            Add
+          </PrimaryTabButton>
+          <TabButton active={tab === 'tax'} onClick={() => setTabAndUrl('tax')}>
+            Tax
           </TabButton>
           <TabButton active={tab === 'more'} onClick={() => setTabAndUrl('more')}>
             More
