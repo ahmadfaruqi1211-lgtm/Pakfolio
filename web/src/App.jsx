@@ -17,10 +17,12 @@ function todayISO() {
 function useAppEngine() {
   const [engine, setEngine] = React.useState({ ready: false })
   const [version, setVersion] = React.useState(0)
+  const [hydrating, setHydrating] = React.useState(true)
 
   const refresh = React.useCallback(() => setVersion((v) => v + 1), [])
 
   React.useEffect(() => {
+    setHydrating(true)
     const ok =
       typeof window !== 'undefined' &&
       window.FIFOQueue &&
@@ -29,6 +31,7 @@ function useAppEngine() {
 
     if (!ok) {
       setEngine({ ready: false })
+      setHydrating(false)
       return
     }
 
@@ -45,6 +48,7 @@ function useAppEngine() {
     }
 
     setEngine({ ready: true, fifoQueue, taxCalculator, storageManager })
+    setHydrating(false)
   }, [version])
 
   const persist = React.useCallback(() => {
@@ -60,7 +64,93 @@ function useAppEngine() {
     [engine]
   )
 
-  return { engine, persist, persistSettings, refresh }
+  return { engine, persist, persistSettings, refresh, hydrating }
+}
+
+function SkeletonBlock({ className }) {
+  return <div className={'shimmer ' + (className || '')} />
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <SkeletonBlock className="h-3 w-40 rounded-lg" />
+            <SkeletonBlock className="mt-3 h-9 w-52 rounded-xl" />
+            <SkeletonBlock className="mt-3 h-7 w-32 rounded-full" />
+          </div>
+          <SkeletonBlock className="h-10 w-28 rounded-2xl" />
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl bg-slate-950/30 border border-slate-800 p-4">
+              <SkeletonBlock className="h-3 w-24 rounded-lg" />
+              <SkeletonBlock className="mt-3 h-6 w-28 rounded-lg" />
+              <SkeletonBlock className="mt-2 h-3 w-20 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+        <SkeletonBlock className="h-4 w-28 rounded-lg" />
+        <SkeletonBlock className="mt-2 h-3 w-64 rounded-lg" />
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonBlock key={i} className="h-10 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PortfolioSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+          <div className="flex items-center justify-between">
+            <SkeletonBlock className="h-5 w-20 rounded-lg" />
+            <SkeletonBlock className="h-4 w-24 rounded-lg" />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+              <SkeletonBlock className="h-3 w-16 rounded-lg" />
+              <SkeletonBlock className="mt-2 h-5 w-24 rounded-lg" />
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+              <SkeletonBlock className="h-3 w-20 rounded-lg" />
+              <SkeletonBlock className="mt-2 h-5 w-28 rounded-lg" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function HistorySkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+          <div className="flex items-center justify-between">
+            <SkeletonBlock className="h-5 w-24 rounded-lg" />
+            <SkeletonBlock className="h-5 w-14 rounded-lg" />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <SkeletonBlock className="h-10 rounded-xl" />
+            <SkeletonBlock className="h-10 rounded-xl" />
+            <SkeletonBlock className="h-10 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function TabButton({ active, children, onClick }) {
@@ -1080,7 +1170,7 @@ function WhatIfScreen({ engine }) {
 }
 
 export default function App() {
-  const { engine, persist, persistSettings, refresh } = useAppEngine()
+  const { engine, persist, persistSettings, refresh, hydrating } = useAppEngine()
 
   const parseTabFromUrl = React.useCallback(() => {
     try {
@@ -1126,8 +1216,16 @@ export default function App() {
 
   if (!engine.ready) {
     return (
-      <div className="min-h-dvh flex items-center justify-center px-6 text-sm text-slate-300">
-        Loading engine...
+      <div className="min-h-dvh flex flex-col">
+        <header className="px-4 pt-6 pb-4">
+          <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
+          <div className="mt-2">
+            <SkeletonBlock className="h-6 w-40 rounded-xl" />
+          </div>
+        </header>
+        <main className="flex-1 px-4 pb-24">
+          <DashboardSkeleton />
+        </main>
       </div>
     )
   }
@@ -1158,12 +1256,12 @@ export default function App() {
       </header>
 
       <main className="flex-1 px-4 pb-24">
-        {tab === 'home' ? <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} /> : null}
+        {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} />) : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
-        {tab === 'portfolio' ? <PortfolioScreen engine={engine} /> : null}
+        {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} />) : null}
         {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
         {tab === 'tax' ? <TaxReportScreen engine={engine} /> : null}
-        {tab === 'history' ? <TransactionHistoryScreen engine={engine} /> : null}
+        {tab === 'history' ? (hydrating ? <HistorySkeleton /> : <TransactionHistoryScreen engine={engine} />) : null}
         {tab === 'corporate' ? <CorporateActionsScreen engine={engine} persist={persist} onChanged={refresh} /> : null}
         {tab === 'more' ? <MoreScreen engine={engine} setTabAndUrl={setTabAndUrl} /> : null}
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} /> : null}
