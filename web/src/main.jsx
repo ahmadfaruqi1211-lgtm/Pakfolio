@@ -1,7 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { jsPDF } from 'jspdf'
 import App from './App'
 import './styles.css'
+
+if (typeof window !== 'undefined') {
+  window.jspdf = { jsPDF }
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
