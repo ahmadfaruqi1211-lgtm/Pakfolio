@@ -302,7 +302,7 @@ class PDFGenerator {
         this.doc.setFont('helvetica', 'normal');
         this.doc.setTextColor(90, 90, 90);
         this.doc.text(
-            'Estimated values based on provided data; verify with your NCCPL tax certificate.',
+            'Estimated values based on provided data; verify with your tax certificate.',
             this.pageWidth / 2,
             this.currentY,
             { align: 'center' }
@@ -506,10 +506,10 @@ class PDFGenerator {
         this._addSpace(3);
 
         this._addText(
-            'Estimated values based on provided data; verify with your NCCPL tax certificate. ' +
+            'Estimated values based on provided data; verify with your tax certificate. ' +
             'This report is for informational purposes only. Consult a tax professional for official tax filing. ' +
-            'This app uses FIFO (First-In-First-Out) methodology as prescribed by NCCPL/FBR regulations. ' +
-            'Tax laws are subject to change. Please verify current tax rates and regulations with NCCPL/FBR before filing.',
+            'This app uses FIFO (First-In-First-Out) methodology as prescribed by applicable regulations. ' +
+            'Tax laws are subject to change. Please verify current tax rates and regulations before filing.',
             9,
             'normal'
         );

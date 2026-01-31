@@ -276,7 +276,7 @@ function TaxReportScreen({ engine }) {
             Your net realized gain exceeds <span className="font-semibold text-slate-100">Rs. 150,000,000</span>. You may have additional obligations under
             <span className="font-semibold text-slate-100"> Section 4C (Super Tax)</span>.
           </div>
-          <div className="mt-2 text-xs text-slate-500">This is an informational alert only. Verify with your NCCPL tax certificate and advisor.</div>
+          <div className="mt-2 text-xs text-slate-500">This is an informational alert only. Verify with your tax certificate and advisor.</div>
         </Card>
       ) : null}
 
@@ -295,7 +295,7 @@ function TaxReportScreen({ engine }) {
                   <div key={idx} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
                     <div className="flex items-center justify-between">
                       <div className="font-semibold text-slate-100">{sale.symbol}</div>
-                      <div className="text-slate-300">{formatNumber(soldQty)} sh</div>
+                      <div className="text-slate-300">{formatNumber(soldQty)} shares</div>
                     </div>
                     <div className="mt-1 text-xs text-slate-500">Date: {String(sale.saleDate || '').slice(0, 10)}</div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
@@ -858,6 +858,9 @@ function PortfolioScreen({ engine, onRefresh }) {
   const holdings = engine.fifoQueue.getHoldings()
   const symbols = Object.keys(holdings || {}).sort()
 
+  const progress = Math.min(pull, 70) / 70
+  const rotateDeg = Math.round(progress * 180)
+
   if (symbols.length === 0) {
     return (
       <Card title="Portfolio" subtitle="No holdings yet">
@@ -872,11 +875,19 @@ function PortfolioScreen({ engine, onRefresh }) {
         <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/40 px-3 py-1 text-xs text-slate-300">
           <div
             className={
-              'h-4 w-4 rounded-full border-2 border-slate-600 border-t-emerald-400 ' +
+              'h-4 w-4 rounded-full border-2 ' +
+              (refreshing
+                ? 'border-slate-600 border-t-emerald-400 '
+                : pull >= 70
+                  ? 'border-emerald-500/40 border-t-emerald-300 '
+                  : 'border-slate-600 border-t-slate-400 ') +
               (refreshing ? 'animate-spin' : '')
             }
+            style={refreshing ? undefined : { transform: `rotate(${rotateDeg}deg)`, transition: 'transform 40ms linear' }}
           />
-          <span>{refreshing ? 'Refreshing…' : pull >= 70 ? 'Release to refresh' : 'Pull to refresh'}</span>
+          <span className={refreshing || pull >= 70 ? 'text-emerald-200' : undefined}>
+            {refreshing ? 'Refreshing…' : pull >= 70 ? 'Release to refresh' : 'Pull to refresh'}
+          </span>
         </div>
       </div>
       {symbols.map((sym) => {
@@ -1031,7 +1042,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
               placeholder="0.5 (default)"
             />
-            <div className="mt-1 text-[11px] text-slate-500">Leave blank to use the default 0.5% NCCPL incidental expense adjustment.</div>
+            <div className="mt-1 text-[11px] text-slate-500">Leave blank to use the default 0.5% incidental expense adjustment.</div>
           </div>
 
           <div>
