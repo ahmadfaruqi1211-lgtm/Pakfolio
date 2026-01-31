@@ -42,7 +42,7 @@ class PakistanStockTaxApp {
         // Initialize UI
         this.initializeEventListeners();
         this.setTodayDate();
-        this.loadData();
+        Promise.resolve(this.loadData()).catch(() => {});
 
         // Wrap initial display update in try-catch
         try {
@@ -1244,9 +1244,9 @@ class PakistanStockTaxApp {
     /**
      * Save data to storage
      */
-    saveData() {
+    async saveData() {
         const data = this.fifoQueue.exportData();
-        const success = this.storageManager.saveData(data);
+        const success = await this.storageManager.saveData(data);
 
         if (success) {
             this.showMessage('Data saved successfully', 'success');
@@ -1259,8 +1259,8 @@ class PakistanStockTaxApp {
     /**
      * Load data from storage
      */
-    loadData() {
-        const data = this.storageManager.loadData();
+    async loadData() {
+        const data = await this.storageManager.loadData();
 
         if (data) {
             this.fifoQueue.importData(data);
@@ -1305,9 +1305,12 @@ class PakistanStockTaxApp {
             cancelLabel: 'Keep My Data',
             onConfirm: () => {
                 this.fifoQueue.reset();
-                this.storageManager.clearAllData();
-                this.updateAllDisplays();
-                this.showMessage('All data has been permanently deleted', 'success');
+                Promise.resolve(this.storageManager.clearAllData())
+                    .catch(() => {})
+                    .finally(() => {
+                        this.updateAllDisplays();
+                        this.showMessage('All data has been permanently deleted', 'success');
+                    });
             },
             onCancel: () => {
                 this.showMessage('Your data is safe', 'info');

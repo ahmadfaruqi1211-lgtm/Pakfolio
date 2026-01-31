@@ -46,8 +46,11 @@ class FIFOQueue {
         const date = new Date(tradeDate);
         let daysAdded = 0;
 
+        const t1Cutoff = new Date('2026-02-09T00:00:00');
+        const businessDaysToAdd = date >= t1Cutoff ? 1 : 2;
+
         // Add 2 business days (skip weekends)
-        while (daysAdded < 2) {
+        while (daysAdded < businessDaysToAdd) {
             date.setDate(date.getDate() + 1);
             const dayOfWeek = date.getDay();
 

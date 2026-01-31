@@ -22,38 +22,53 @@ function useAppEngine() {
   const refresh = React.useCallback(() => setVersion((v) => v + 1), [])
 
   React.useEffect(() => {
+    let cancelled = false
     setHydrating(true)
-    const ok =
-      typeof window !== 'undefined' &&
-      window.FIFOQueue &&
-      window.TaxCalculator &&
-      window.StorageManager
 
-    if (!ok) {
-      setEngine({ ready: false })
-      setHydrating(false)
-      return
+    const run = async () => {
+      const ok =
+        typeof window !== 'undefined' &&
+        window.FIFOQueue &&
+        window.TaxCalculator &&
+        window.StorageManager
+
+      if (!ok) {
+        if (!cancelled) {
+          setEngine({ ready: false })
+          setHydrating(false)
+        }
+        return
+      }
+
+      const fifoQueue = new window.FIFOQueue()
+      const taxCalculator = new window.TaxCalculator()
+      const storageManager = new window.StorageManager()
+
+      try {
+        const data = await storageManager.loadData()
+        if (data) fifoQueue.importData(data)
+      } catch (e) {}
+
+      const settings = storageManager.loadSettings()
+      if (settings && typeof settings.filerStatus === 'boolean') {
+        taxCalculator.setFilerStatus(settings.filerStatus)
+      }
+
+      if (!cancelled) {
+        setEngine({ ready: true, fifoQueue, taxCalculator, storageManager })
+        setHydrating(false)
+      }
     }
 
-    const fifoQueue = new window.FIFOQueue()
-    const taxCalculator = new window.TaxCalculator()
-    const storageManager = new window.StorageManager()
-
-    const data = storageManager.loadData()
-    if (data) fifoQueue.importData(data)
-
-    const settings = storageManager.loadSettings()
-    if (settings && typeof settings.filerStatus === 'boolean') {
-      taxCalculator.setFilerStatus(settings.filerStatus)
+    run()
+    return () => {
+      cancelled = true
     }
-
-    setEngine({ ready: true, fifoQueue, taxCalculator, storageManager })
-    setHydrating(false)
   }, [version])
 
   const persist = React.useCallback(() => {
     if (!engine.ready) return
-    engine.storageManager.saveData(engine.fifoQueue.exportData())
+    Promise.resolve(engine.storageManager.saveData(engine.fifoQueue.exportData())).catch(() => {})
   }, [engine])
 
   const persistSettings = React.useCallback(
@@ -663,6 +678,15 @@ function DashboardScreen({ engine, setTabAndUrl }) {
   const realizedGains = engine.fifoQueue.getRealizedGains()
   const txns = engine.fifoQueue.getTransactions ? engine.fifoQueue.getTransactions() : []
 
+  const t1Cutoff = new Date('2026-02-09T00:00:00')
+  const hasT1Context =
+    new Date() >= t1Cutoff ||
+    (txns || []).some((t) => {
+      const d = t?.tradeDate || t?.timestamp
+      if (!d) return false
+      return new Date(d) >= t1Cutoff
+    })
+
   let totalHoldingsQty = 0
   let totalHoldingsCost = 0
   for (const s of Object.keys(holdings || {})) {
@@ -725,6 +749,14 @@ function DashboardScreen({ engine, setTabAndUrl }) {
         </div>
       </div>
 
+      {hasT1Context ? (
+        <Card title="Settlement Update (T+1)" subtitle="Effective Feb 9, 2026">
+          <div className="text-sm text-slate-300">
+            PSX has transitioned to T+1 settlement. Your gains and holding periods are now calculated on a 24-hour cycle.
+          </div>
+        </Card>
+      ) : null}
+
       {!hasHoldings ? (
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
           <div className="text-sm font-semibold text-slate-100">Get started</div>
@@ -743,7 +775,7 @@ function DashboardScreen({ engine, setTabAndUrl }) {
           <div className="mt-3 rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-xs text-slate-300 space-y-1">
             <div className="text-slate-100 font-semibold">Quick definitions</div>
             <div><span className="font-semibold text-slate-100">FIFO</span>: Oldest shares are treated as sold first.</div>
-            <div><span className="font-semibold text-slate-100">T+2</span>: PSX settlement is typically trade date + 2 business days.</div>
+            <div><span className="font-semibold text-slate-100">T+1</span>: PSX settlement is typically trade date + 1 business day.</div>
             <div><span className="font-semibold text-slate-100">Capital gain</span>: Net sale proceeds − cost basis (after fees).</div>
           </div>
         </div>
@@ -974,7 +1006,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
 
   return (
     <div className="space-y-4">
-      <Card title="Add Transaction" subtitle="FIFO (T+2 settlement)">
+      <Card title="Add Transaction" subtitle="FIFO (T+1 settlement)">
         <form onSubmit={onSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -1101,7 +1133,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
   )
 }
 
-function SettingsScreen({ engine, persistSettings }) {
+function SettingsScreen({ engine, persistSettings, onReset }) {
   const [isFiler, setIsFiler] = React.useState(Boolean(engine.taxCalculator.isFiler))
 
   const toggle = () => {
@@ -1118,8 +1150,11 @@ function SettingsScreen({ engine, persistSettings }) {
   const clearData = () => {
     const ok = window.confirm('Clear all saved data on this device?')
     if (!ok) return
-    engine.storageManager.clearAllData()
-    window.location.reload()
+    Promise.resolve(engine.storageManager.clearAllData())
+      .catch(() => {})
+      .finally(() => {
+        window.location.reload()
+      })
   }
 
   return (

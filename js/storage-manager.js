@@ -18,12 +18,78 @@ class StorageManager {
         this.autoSaveEnabled = true;
         this.dataVersion = '1.0';
 
+        this.idbDbName = 'pakfolio';
+        this.idbStoreName = 'kv';
+        this.idbVersion = 1;
+        this.idbAvailable = this._checkIndexedDBAvailability();
+        this._dbPromise = null;
+
         // Check if localStorage is available
         this.isAvailable = this._checkLocalStorageAvailability();
 
         if (!this.isAvailable) {
             console.warn('⚠ localStorage not available - data will not persist');
         }
+    }
+
+    _checkIndexedDBAvailability() {
+        try {
+            return typeof indexedDB !== 'undefined';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    _openDb() {
+        if (!this.idbAvailable) return Promise.reject(new Error('IndexedDB not available'));
+        if (this._dbPromise) return this._dbPromise;
+
+        this._dbPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open(this.idbDbName, this.idbVersion);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains(this.idbStoreName)) {
+                    db.createObjectStore(this.idbStoreName, { keyPath: 'key' });
+                }
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error || new Error('Failed to open IndexedDB'));
+        });
+
+        return this._dbPromise;
+    }
+
+    async _idbGet(key) {
+        const db = await this._openDb();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(this.idbStoreName, 'readonly');
+            const store = tx.objectStore(this.idbStoreName);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result ? req.result.value : null);
+            req.onerror = () => reject(req.error || new Error('IndexedDB get failed'));
+        });
+    }
+
+    async _idbSet(key, value) {
+        const db = await this._openDb();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(this.idbStoreName, 'readwrite');
+            const store = tx.objectStore(this.idbStoreName);
+            const req = store.put({ key, value });
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error || new Error('IndexedDB put failed'));
+        });
+    }
+
+    async _idbDel(key) {
+        const db = await this._openDb();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(this.idbStoreName, 'readwrite');
+            const store = tx.objectStore(this.idbStoreName);
+            const req = store.delete(key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error || new Error('IndexedDB delete failed'));
+        });
     }
 
     /**
@@ -93,14 +159,8 @@ class StorageManager {
      * @param {boolean} encrypt - Whether to encrypt the data
      * @returns {boolean} Success status
      */
-    saveData(data, encrypt = false) {
-        if (!this.isAvailable) {
-            console.warn('⚠ Cannot save: localStorage not available');
-            return false;
-        }
-
+    async saveData(data, encrypt = false) {
         try {
-            // Add metadata
             const dataWithMeta = {
                 version: this.dataVersion,
                 timestamp: new Date().toISOString(),
@@ -108,24 +168,28 @@ class StorageManager {
                 data: data
             };
 
-            let jsonString = JSON.stringify(dataWithMeta);
+            const valueToStore = encrypt ? this._encrypt(JSON.stringify(dataWithMeta)) : dataWithMeta;
 
-            // Encrypt if requested
-            if (encrypt) {
-                jsonString = this._encrypt(jsonString);
+            if (this.idbAvailable) {
+                await this._idbSet(this.storageKey, valueToStore);
+                if (this.isAvailable) {
+                    try {
+                        localStorage.removeItem(this.storageKey);
+                    } catch (e) {}
+                }
+                return true;
             }
 
-            localStorage.setItem(this.storageKey, jsonString);
+            if (!this.isAvailable) {
+                console.warn('⚠ Cannot save: no persistent storage available');
+                return false;
+            }
+
+            localStorage.setItem(this.storageKey, encrypt ? valueToStore : JSON.stringify(valueToStore));
             console.log('✓ Data saved to localStorage');
             return true;
         } catch (e) {
             console.error('Failed to save data:', e);
-
-            // Check if quota exceeded
-            if (e.name === 'QuotaExceededError') {
-                console.error('⚠ localStorage quota exceeded');
-            }
-
             return false;
         }
     }
@@ -135,20 +199,62 @@ class StorageManager {
      * @param {boolean} encrypted - Whether the data is encrypted
      * @returns {object|null} Loaded data or null if not found
      */
-    loadData(encrypted = false) {
-        if (!this.isAvailable) {
-            return null;
-        }
-
+    async loadData(encrypted = false) {
         try {
-            let jsonString = localStorage.getItem(this.storageKey);
+            if (this.idbAvailable) {
+                let value = await this._idbGet(this.storageKey);
+                if (!value && this.isAvailable) {
+                    try {
+                        const legacy = localStorage.getItem(this.storageKey);
+                        if (legacy) {
+                            await this._idbSet(this.storageKey, legacy);
+                            localStorage.removeItem(this.storageKey);
+                            value = legacy;
+                        }
+                    } catch (e) {}
+                }
 
+                if (!value) {
+                    console.log('ℹ No saved data found');
+                    return null;
+                }
+
+                if (typeof value === 'string') {
+                    let jsonString = value;
+                    if (encrypted) {
+                        jsonString = this._decrypt(jsonString);
+                        if (!jsonString) {
+                            console.error('Failed to decrypt data');
+                            return null;
+                        }
+                    }
+                    const dataWithMeta = JSON.parse(jsonString);
+                    if (dataWithMeta.version !== this.dataVersion) {
+                        console.warn(`⚠ Data version mismatch: ${dataWithMeta.version} vs ${this.dataVersion}`);
+                    }
+                    return dataWithMeta.data;
+                }
+
+                if (value && typeof value === 'object' && value.data) {
+                    if (value.version !== this.dataVersion) {
+                        console.warn(`⚠ Data version mismatch: ${value.version} vs ${this.dataVersion}`);
+                    }
+                    return value.data;
+                }
+
+                return null;
+            }
+
+            if (!this.isAvailable) {
+                return null;
+            }
+
+            let jsonString = localStorage.getItem(this.storageKey);
             if (!jsonString) {
                 console.log('ℹ No saved data found');
                 return null;
             }
 
-            // Decrypt if needed
             if (encrypted) {
                 jsonString = this._decrypt(jsonString);
                 if (!jsonString) {
@@ -158,14 +264,9 @@ class StorageManager {
             }
 
             const dataWithMeta = JSON.parse(jsonString);
-
-            // Version check
             if (dataWithMeta.version !== this.dataVersion) {
                 console.warn(`⚠ Data version mismatch: ${dataWithMeta.version} vs ${this.dataVersion}`);
-                // You could add migration logic here
             }
-
-            console.log('✓ Data loaded from localStorage');
             return dataWithMeta.data;
         } catch (e) {
             console.error('Failed to load data:', e);
@@ -300,14 +401,19 @@ class StorageManager {
      * Clear all stored data
      * @returns {boolean} Success status
      */
-    clearAllData() {
-        if (!this.isAvailable) {
-            return false;
-        }
-
+    async clearAllData() {
         try {
-            localStorage.removeItem(this.storageKey);
-            localStorage.removeItem(this.settingsKey);
+            if (this.idbAvailable) {
+                try {
+                    await this._idbDel(this.storageKey);
+                } catch (e) {}
+            }
+
+            if (this.isAvailable) {
+                localStorage.removeItem(this.storageKey);
+                localStorage.removeItem(this.settingsKey);
+            }
+
             console.log('✓ All data cleared');
             return true;
         } catch (e) {
@@ -322,11 +428,11 @@ class StorageManager {
      */
     getStorageInfo() {
         if (!this.isAvailable) {
-            return { available: false };
+            return { available: false, indexedDB: Boolean(this.idbAvailable) };
         }
 
         try {
-            // Calculate approximate size
+            // Calculate approximate size (localStorage only)
             let totalSize = 0;
             for (let key in localStorage) {
                 if (localStorage.hasOwnProperty(key)) {
@@ -341,6 +447,7 @@ class StorageManager {
 
             return {
                 available: true,
+                indexedDB: Boolean(this.idbAvailable),
                 totalSize: totalSize,
                 totalSizeKB: (totalSize / 1024).toFixed(2),
                 appSize: appSize,
@@ -350,7 +457,7 @@ class StorageManager {
             };
         } catch (e) {
             console.error('Failed to get storage info:', e);
-            return { available: true, error: true };
+            return { available: true, indexedDB: Boolean(this.idbAvailable), error: true };
         }
     }
 

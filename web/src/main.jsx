@@ -8,10 +8,18 @@ if (typeof window !== 'undefined') {
   window.jspdf = { jsPDF }
 }
 
+if (typeof window !== 'undefined') {
+  try {
+    if (navigator.storage && typeof navigator.storage.persist === 'function') {
+      navigator.storage.persist().catch(() => {})
+    }
+  } catch {}
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js?v=3', { updateViaCache: 'none' })
+      .register('/sw.js?v=5', { updateViaCache: 'none' })
       .then((reg) => {
         reg.addEventListener('updatefound', () => {
           const installing = reg.installing
