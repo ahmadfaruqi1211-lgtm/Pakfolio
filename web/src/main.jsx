@@ -11,7 +11,7 @@ if (typeof window !== 'undefined') {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      .register('/sw.js?v=3', { updateViaCache: 'none' })
       .then((reg) => {
         reg.addEventListener('updatefound', () => {
           const installing = reg.installing
