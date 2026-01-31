@@ -108,69 +108,60 @@ class CorporateActionsManager {
         }
 
         const exDateObj = new Date(exDate);
-        let totalOldShares = 0;
-        let totalBonusShares = 0;
-        let totalCostBasis = 0;
+        let eligibleShares = 0;
 
-        // Calculate totals for lots purchased before ex-date
         for (const lot of lots) {
-            // Only apply to shares purchased before ex-date
             if (lot.purchaseDate < exDateObj) {
-                totalOldShares += lot.remainingQuantity;
-                totalCostBasis += lot.remainingQuantity * lot.price;
+                eligibleShares += Number(lot.remainingQuantity) || 0;
             }
         }
 
-        if (totalOldShares === 0) {
+        if (eligibleShares === 0) {
             throw new Error(
                 `No shares purchased before ex-date (${exDate}) for ${symbol}`
             );
         }
 
-        // Calculate bonus shares
-        totalBonusShares = Math.floor(totalOldShares * bonusRatio);
+        const bonusSharesEntitled = Math.floor(eligibleShares * bonusRatio);
 
-        if (totalBonusShares === 0) {
+        if (bonusSharesEntitled === 0) {
             throw new Error(
-                `Bonus ratio too small: ${totalOldShares} × ${bonusRatio} = ${totalBonusShares} shares`
+                `Bonus ratio too small: ${eligibleShares} × ${bonusRatio} = ${bonusSharesEntitled} shares`
             );
         }
 
-        // New total shares and adjusted cost
-        const totalNewShares = totalOldShares + totalBonusShares;
-        const newAvgCost = totalCostBasis / totalNewShares;
-
-        // Adjust all lots purchased before ex-date
-        for (const lot of lots) {
-            if (lot.purchaseDate < exDateObj) {
-                const oldQuantity = lot.remainingQuantity;
-                const bonusForThisLot = Math.floor(oldQuantity * bonusRatio);
-
-                // Adjust quantity
-                lot.remainingQuantity = oldQuantity + bonusForThisLot;
-
-                // Adjust price (cost per share decreases)
-                lot.price = (oldQuantity * lot.price) / lot.remainingQuantity;
-
-                console.log(
-                    `  Adjusted lot: ${oldQuantity} → ${lot.remainingQuantity} shares, ` +
-                    `price adjusted to Rs. ${lot.price.toFixed(2)}`
-                );
+        const bonusLot = {
+            quantity: bonusSharesEntitled,
+            price: 0,
+            purchaseDate: exDateObj,
+            remainingQuantity: bonusSharesEntitled,
+            originalTransaction: {
+                type: 'BONUS_SHARE',
+                symbol: symbol,
+                exDate: exDateObj,
+                bonusRatio: bonusRatio,
+                eligibleShares: eligibleShares
             }
-        }
+        };
+
+        lots.push(bonusLot);
+        lots.sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate));
+
+        const holdings = this.fifoQueue.getHoldings();
+        const updatedHolding = holdings[symbol];
 
         return {
             type: 'BONUS',
             symbol: symbol,
-            oldShares: totalOldShares,
-            bonusShares: totalBonusShares,
-            newTotalShares: totalNewShares,
-            oldAvgCost: totalCostBasis / totalOldShares,
-            newAvgCost: newAvgCost,
-            costBasis: totalCostBasis,
+            eligibleShares: eligibleShares,
+            bonusSharesEntitled: bonusSharesEntitled,
             bonusRatio: bonusRatio,
             bonusPercentage: (bonusRatio * 100).toFixed(2) + '%',
-            summary: `Bonus ${(bonusRatio * 100).toFixed(0)}%: ${totalOldShares} → ${totalNewShares} shares, avg cost Rs. ${(totalCostBasis / totalOldShares).toFixed(2)} → Rs. ${newAvgCost.toFixed(2)}`
+            exDate: exDateObj,
+            newTotalShares: updatedHolding.totalQuantity,
+            newAvgCost: updatedHolding.averageCost,
+            newTotalCostBasis: updatedHolding.totalCostBasis,
+            summary: `Bonus ${(bonusRatio * 100).toFixed(0)}%: Added ${bonusSharesEntitled} shares @ Rs. 0.00 (acquired ${exDateObj.toLocaleDateString('en-PK')}), new avg cost Rs. ${updatedHolding.averageCost.toFixed(2)}`
         };
     }
 
@@ -424,33 +415,37 @@ class CorporateActionsManager {
      */
     _reverseBonusShares(action) {
         const symbol = action.symbol;
-        const bonusRatio = action.result.bonusRatio;
         const exDate = new Date(action.details.exDate);
+        const bonusSharesEntitled =
+            Number(action.result?.bonusSharesEntitled) ||
+            Number(action.result?.bonusShares) ||
+            0;
 
         const lots = this.fifoQueue.holdings[symbol];
         if (!lots) {
             throw new Error(`No lots found for ${symbol}`);
         }
 
-        // Reverse the adjustment
-        for (const lot of lots) {
-            if (lot.purchaseDate < exDate) {
-                const currentQuantity = lot.remainingQuantity;
-                const originalQuantity = Math.floor(currentQuantity / (1 + bonusRatio));
-                const bonusRemoved = currentQuantity - originalQuantity;
+        const idx = lots.findIndex(lot =>
+            lot &&
+            lot.originalTransaction &&
+            lot.originalTransaction.type === 'BONUS_SHARE' &&
+            new Date(lot.purchaseDate).getTime() === exDate.getTime() &&
+            Number(lot.quantity) === bonusSharesEntitled
+        );
 
-                // Restore original quantity
-                lot.remainingQuantity = originalQuantity;
-
-                // Restore original price
-                lot.price = (currentQuantity * lot.price) / originalQuantity;
-
-                console.log(
-                    `  Reversed lot: ${currentQuantity} → ${originalQuantity} shares ` +
-                    `(removed ${bonusRemoved} bonus shares)`
-                );
-            }
+        if (idx === -1) {
+            throw new Error('Bonus share lot not found for reversal');
         }
+
+        const bonusLot = lots[idx];
+        if (Number(bonusLot.remainingQuantity) !== Number(bonusLot.quantity)) {
+            throw new Error(
+                `Cannot reverse: ${Number(bonusLot.quantity) - Number(bonusLot.remainingQuantity)} bonus shares have been sold`
+            );
+        }
+
+        lots.splice(idx, 1);
     }
 
     /**

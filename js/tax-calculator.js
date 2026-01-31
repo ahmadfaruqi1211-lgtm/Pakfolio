@@ -31,7 +31,7 @@ class TaxCalculator {
                 default: 0.15  // 15% flat rate
             },
             nonFiler: {
-                default: 0.15  // 15% flat rate (same for non-filers on securities)
+                default: 0.30  // 30% flat rate
             }
         };
 

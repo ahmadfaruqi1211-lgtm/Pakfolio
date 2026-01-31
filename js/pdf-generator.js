@@ -228,7 +228,7 @@ class PDFGenerator {
             // Generator credit
             this.doc.setFont('helvetica', 'italic');
             this.doc.text(
-                'Generated with Pakistan Stock Tax Calculator',
+                'Generated with PakFolio',
                 this.pageWidth / 2,
                 this.pageHeight - 5,
                 { align: 'center' }
@@ -258,7 +258,7 @@ class PDFGenerator {
         this.doc.setFontSize(24);
         this.doc.setFont('helvetica', 'bold');
         this.doc.setTextColor(this.primaryColor[0], this.primaryColor[1], this.primaryColor[2]);
-        this.doc.text('Pakistan Stock Tax Calculator', this.pageWidth / 2, this.currentY, { align: 'center' });
+        this.doc.text('PakFolio', this.pageWidth / 2, this.currentY, { align: 'center' });
         this.currentY += 15;
 
         // Report title
@@ -292,6 +292,17 @@ class PDFGenerator {
         this.doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
         this.doc.text(
             `Taxpayer Status: ${taxCalculator.isFiler ? 'Filer' : 'Non-Filer'}`,
+            this.pageWidth / 2,
+            this.currentY,
+            { align: 'center' }
+        );
+
+        this.currentY += 10;
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setTextColor(90, 90, 90);
+        this.doc.text(
+            'Estimated values based on provided data; verify with your NCCPL tax certificate.',
             this.pageWidth / 2,
             this.currentY,
             { align: 'center' }
@@ -394,8 +405,8 @@ class PDFGenerator {
                     txn.symbol,
                     txn.type,
                     txn.quantity,
-                    this._formatCurrency(txn.price),
-                    this._formatCurrency(txn.quantity * txn.price + (txn.commission || 0))
+                    this._formatCurrency((txn.adjustedPrice ?? txn.price) || 0),
+                    this._formatCurrency((txn.adjustedTotalValue ?? (txn.quantity * txn.price)) || 0)
                 ]);
             }
 
@@ -447,12 +458,15 @@ class PDFGenerator {
 
                 const taxCalc = taxCalculator.calculateTaxForSale(sale);
 
+                const uniqueRates = Array.from(new Set((taxCalc.taxByLot || []).map((l) => l.taxRatePercentage))).filter(Boolean);
+                const rateLabel = uniqueRates.length === 0 ? 'N/A' : uniqueRates.length === 1 ? uniqueRates[0] : 'Multiple';
+
                 this.doc.setFontSize(9);
                 this.doc.setTextColor(0, 0, 0);
                 this.doc.text(`Total Cost Basis: ${this._formatCurrency(sale.totalCostBasis)}`, this.margin + 10, this.currentY + 8);
                 this.doc.text(`Proceeds: ${this._formatCurrency(sale.saleProceeds)}`, this.margin + 10, this.currentY + 14);
                 this.doc.text(`Capital Gain: ${this._formatCurrency(sale.capitalGain)}`, this.margin + 10, this.currentY + 20);
-                this.doc.text(`Tax Rate: 15%`, this.margin + 10, this.currentY + 26);
+                this.doc.text(`Tax Rate: ${rateLabel}`, this.margin + 10, this.currentY + 26);
 
                 this.doc.setFont('helvetica', 'bold');
                 this.doc.setTextColor(239, 68, 68);
@@ -472,14 +486,15 @@ class PDFGenerator {
 
         this._addText(`Gains by Holding Period:`, 11, 'bold');
         this._addSpace(2);
-        this._addText(`  All holdings taxed at flat rate of 15% (Post July 1, 2024)`, 9);
+        const postCutoffRate = (taxCalculator.isFiler ? 0.15 : 0.30) * 100;
+        this._addText(`  Rates vary by acquisition date and holding period. Post July 1, 2024: ${postCutoffRate.toFixed(1)}% (${taxCalculator.isFiler ? 'Filer' : 'Non-Filer'})`, 9);
         this._addSpace(5);
 
         this._addText(`Total Realized Gains: ${this._formatCurrency(totalGains)}`, 10);
         this._addText(`Total Realized Losses: ${this._formatCurrency(totalLosses)}`, 10);
         this._addText(`Net Gains: ${this._formatCurrency(netGains)}`, 11, 'bold');
         this._addSpace(3);
-        this._addText(`Tax Rate: 15.0%`, 10);
+        this._addText(`Tax Rate: varies by lot`, 10);
         this._addText(`Total Tax Due: ${this._formatCurrency(totalTax)}`, 12, 'bold', 'left', [239, 68, 68]);
         this._addSpace(5);
 
@@ -491,10 +506,10 @@ class PDFGenerator {
         this._addSpace(3);
 
         this._addText(
+            'Estimated values based on provided data; verify with your NCCPL tax certificate. ' +
             'This report is for informational purposes only. Consult a tax professional for official tax filing. ' +
             'This app uses FIFO (First-In-First-Out) methodology as prescribed by NCCPL/FBR regulations. ' +
-            'Tax laws are subject to change. The calculator assumes a flat 15% CGT rate applicable to securities acquired ' +
-            'after July 1, 2024. Please verify current tax rates and regulations with FBR before filing.',
+            'Tax laws are subject to change. Please verify current tax rates and regulations with NCCPL/FBR before filing.',
             9,
             'normal'
         );

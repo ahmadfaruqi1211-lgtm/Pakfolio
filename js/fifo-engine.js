@@ -22,6 +22,21 @@ class FIFOQueue {
         this.realizedGains = [];
     }
 
+    _normalizeFeePercent(feePercent) {
+        if (feePercent === undefined || feePercent === null || feePercent === '') return 0.5;
+        const n = Number(feePercent);
+        if (isNaN(n) || !isFinite(n) || n < 0) return 0.5;
+        return n;
+    }
+
+    _getAdjustedPrice(type, price, feePercent) {
+        const pct = this._normalizeFeePercent(feePercent) / 100;
+        const p = Number(price) || 0;
+        if (type === 'BUY') return p * (1 + pct);
+        if (type === 'SELL') return p * (1 - pct);
+        return p;
+    }
+
     /**
      * Add a settlement date to a trade date (T+2 for Pakistan Stock Exchange)
      * @param {Date} tradeDate - The trade execution date
@@ -54,25 +69,32 @@ class FIFOQueue {
      * @param {Date|string} date - Trade date
      * @returns {object} Transaction record with calculated fields
      */
-    addTransaction(type, symbol, quantity, price, date) {
+    addTransaction(type, symbol, quantity, price, date, feePercent = undefined) {
         const tradeDate = new Date(date);
         const settlementDate = this.calculateSettlementDate(tradeDate);
 
+        const txType = String(type || '').toUpperCase();
+        const appliedFeePercent = this._normalizeFeePercent(feePercent);
+        const adjustedPrice = this._getAdjustedPrice(txType, price, appliedFeePercent);
+
         const transaction = {
             id: this.transactions.length + 1,
-            type: type.toUpperCase(),
+            type: txType,
             symbol: symbol.toUpperCase(),
             quantity: parseFloat(quantity),
             price: parseFloat(price),
+            adjustedPrice: adjustedPrice,
+            feePercent: appliedFeePercent,
             tradeDate: tradeDate,
             settlementDate: settlementDate,
             totalValue: parseFloat(quantity) * parseFloat(price),
+            adjustedTotalValue: parseFloat(quantity) * adjustedPrice,
             timestamp: new Date()
         };
 
-        if (type.toUpperCase() === 'BUY') {
+        if (txType === 'BUY') {
             this._processBuy(transaction);
-        } else if (type.toUpperCase() === 'SELL') {
+        } else if (txType === 'SELL') {
             return this._processSell(transaction);
         }
 
@@ -88,7 +110,7 @@ class FIFOQueue {
         // SAFE extraction of values
         const symbol = transaction.symbol || '';
         const quantity = Number(transaction.quantity) || 0;
-        const price = Number(transaction.price) || 0;
+        const price = Number(transaction.adjustedPrice ?? transaction.price) || 0;
         const settlementDate = transaction.settlementDate;
 
         console.log('=== _processBuy ===');
@@ -113,6 +135,8 @@ class FIFOQueue {
             cost: price,                          // Alias for price
             costPerShare: price,                  // Another alias
             purchasePrice: price,                 // Another alias
+            grossPrice: Number(transaction.price) || price,
+            feePercent: Number(transaction.feePercent) || 0,
             purchaseDate: settlementDate,
             remainingQuantity: quantity,
             value: quantity * price,              // Pre-calculated value
@@ -132,7 +156,9 @@ class FIFOQueue {
      * @returns {object} Sale result with cost basis and capital gains
      */
     _processSell(transaction) {
-        const { symbol, quantity, price, settlementDate } = transaction;
+        const { symbol, quantity, settlementDate } = transaction;
+        const grossPrice = Number(transaction.price) || 0;
+        const price = Number(transaction.adjustedPrice ?? transaction.price) || 0;
 
         // Check if we have any holdings for this symbol
         if (!this.holdings[symbol] || this.holdings[symbol].length === 0) {
@@ -206,6 +232,8 @@ class FIFOQueue {
             symbol: symbol,
             quantitySold: quantity,
             sellPrice: price,
+            grossSellPrice: grossPrice,
+            feePercent: Number(transaction.feePercent) || 0,
             saleProceeds: saleProceeds,
             totalCostBasis: totalCostBasis,
             capitalGain: capitalGain,
@@ -231,9 +259,12 @@ class FIFOQueue {
      * @param {Date|string} sellDate - Hypothetical sell date
      * @returns {object} Projected sale result
      */
-    calculateSale(symbol, quantity, sellPrice, sellDate) {
+    calculateSale(symbol, quantity, sellPrice, sellDate, feePercent = undefined) {
         symbol = symbol.toUpperCase();
         const settlementDate = this.calculateSettlementDate(new Date(sellDate));
+
+        const appliedFeePercent = this._normalizeFeePercent(feePercent);
+        const adjustedSellPrice = this._getAdjustedPrice('SELL', sellPrice, appliedFeePercent);
 
         if (!this.holdings[symbol] || this.holdings[symbol].length === 0) {
             throw new Error(`No holdings found for ${symbol}`);
@@ -280,13 +311,15 @@ class FIFOQueue {
             }
         }
 
-        const saleProceeds = quantity * sellPrice;
+        const saleProceeds = quantity * adjustedSellPrice;
         const capitalGain = saleProceeds - totalCostBasis;
 
         return {
             symbol: symbol,
             quantitySold: quantity,
-            sellPrice: sellPrice,
+            sellPrice: adjustedSellPrice,
+            grossSellPrice: sellPrice,
+            feePercent: appliedFeePercent,
             saleProceeds: saleProceeds,
             totalCostBasis: totalCostBasis,
             capitalGain: capitalGain,
@@ -501,31 +534,108 @@ class FIFOQueue {
             // Restore dates from string format
             this.holdings = {};
             for (const symbol in data.holdings) {
-                this.holdings[symbol] = data.holdings[symbol].map(lot => ({
-                    ...lot,
-                    purchaseDate: new Date(lot.purchaseDate)
-                }));
+                this.holdings[symbol] = data.holdings[symbol].map(lot => {
+                    const restored = {
+                        ...lot,
+                        purchaseDate: new Date(lot.purchaseDate)
+                    };
+
+                    // Backward-compat migration for fee-adjusted cost basis
+                    if (restored.grossPrice === undefined || restored.grossPrice === null) {
+                        restored.grossPrice = Number(restored.price) || 0;
+                    }
+                    if (restored.feePercent === undefined || restored.feePercent === null || restored.feePercent === '') {
+                        restored.feePercent = 0.5;
+                    }
+
+                    const pct = (Number(restored.feePercent) || 0) / 100;
+                    if (pct >= 0 && Number(restored.price) === Number(restored.grossPrice)) {
+                        const adjusted = (Number(restored.grossPrice) || 0) * (1 + pct);
+                        restored.price = adjusted;
+                        restored.cost = adjusted;
+                        restored.costPerShare = adjusted;
+                        restored.purchasePrice = adjusted;
+                    }
+
+                    return restored;
+                });
             }
         }
 
         if (data.transactions) {
-            this.transactions = data.transactions.map(t => ({
-                ...t,
-                tradeDate: new Date(t.tradeDate),
-                settlementDate: new Date(t.settlementDate),
-                timestamp: new Date(t.timestamp)
-            }));
+            this.transactions = data.transactions.map(t => {
+                const restored = {
+                    ...t,
+                    tradeDate: new Date(t.tradeDate),
+                    settlementDate: new Date(t.settlementDate),
+                    timestamp: new Date(t.timestamp)
+                };
+
+                const type = String(restored.type || '').toUpperCase();
+                const feePercent =
+                    restored.feePercent === undefined || restored.feePercent === null || restored.feePercent === ''
+                        ? 0.5
+                        : Number(restored.feePercent);
+
+                restored.feePercent = isNaN(feePercent) || !isFinite(feePercent) || feePercent < 0 ? 0.5 : feePercent;
+
+                if (restored.adjustedPrice === undefined || restored.adjustedPrice === null) {
+                    const pct = restored.feePercent / 100;
+                    const price = Number(restored.price) || 0;
+                    restored.adjustedPrice = type === 'BUY' ? price * (1 + pct) : type === 'SELL' ? price * (1 - pct) : price;
+                }
+
+                if (restored.adjustedTotalValue === undefined || restored.adjustedTotalValue === null) {
+                    const qty = Number(restored.quantity) || 0;
+                    restored.adjustedTotalValue = qty * (Number(restored.adjustedPrice) || 0);
+                }
+
+                return restored;
+            });
         }
 
         if (data.realizedGains) {
-            this.realizedGains = data.realizedGains.map(g => ({
-                ...g,
-                saleDate: new Date(g.saleDate),
-                lotsUsed: g.lotsUsed.map(lot => ({
-                    ...lot,
-                    purchaseDate: new Date(lot.purchaseDate)
-                }))
-            }));
+            this.realizedGains = data.realizedGains.map(g => {
+                const restored = {
+                    ...g,
+                    saleDate: new Date(g.saleDate)
+                };
+
+                const feePercent =
+                    restored.feePercent === undefined || restored.feePercent === null || restored.feePercent === ''
+                        ? 0.5
+                        : Number(restored.feePercent);
+
+                restored.feePercent = isNaN(feePercent) || !isFinite(feePercent) || feePercent < 0 ? 0.5 : feePercent;
+                restored.grossSellPrice = restored.grossSellPrice ?? restored.sellPrice;
+
+                const pct = restored.feePercent / 100;
+                const grossSell = Number(restored.grossSellPrice) || 0;
+                if (Number(restored.sellPrice) === grossSell) {
+                    restored.sellPrice = grossSell * (1 - pct);
+                }
+
+                const lotsUsed = Array.isArray(restored.lotsUsed) ? restored.lotsUsed : [];
+                restored.lotsUsed = lotsUsed.map(lot => {
+                    const purchaseDate = new Date(lot.purchaseDate);
+                    const qty = Number(lot.quantity) || 0;
+                    const grossCost = Number(lot.costPerShare) || 0;
+                    const adjCost = grossCost * (1 + pct);
+                    return {
+                        ...lot,
+                        purchaseDate,
+                        costPerShare: adjCost,
+                        costBasis: qty * adjCost
+                    };
+                });
+
+                const quantitySold = Number(restored.quantitySold) || 0;
+                restored.totalCostBasis = restored.lotsUsed.reduce((sum, lot) => sum + (Number(lot.costBasis) || 0), 0);
+                restored.saleProceeds = quantitySold * (Number(restored.sellPrice) || 0);
+                restored.capitalGain = restored.saleProceeds - restored.totalCostBasis;
+
+                return restored;
+            });
         }
 
         console.log('✓ Data imported successfully');

@@ -209,6 +209,8 @@ function TaxReportScreen({ engine }) {
     totalTax += Number(t.totalTax || 0)
   }
 
+  const showSuperTax = totalGain > 150_000_000
+
   const exportPdf = () => {
     try {
       if (typeof window === 'undefined' || !window.PDFGenerator) {
@@ -267,6 +269,16 @@ function TaxReportScreen({ engine }) {
           </button>
         </div>
       </Card>
+
+      {showSuperTax ? (
+        <Card title="Super Tax (Section 4C)" subtitle="Net realized gain threshold">
+          <div className="text-sm text-slate-300">
+            Your net realized gain exceeds <span className="font-semibold text-slate-100">Rs. 150,000,000</span>. You may have additional obligations under
+            <span className="font-semibold text-slate-100"> Section 4C (Super Tax)</span>.
+          </div>
+          <div className="mt-2 text-xs text-slate-500">This is an informational alert only. Verify with your NCCPL tax certificate and advisor.</div>
+        </Card>
+      ) : null}
 
       <Card title="Realized Sales" subtitle="FIFO sale breakdown">
         <div className="space-y-2">
@@ -670,6 +682,7 @@ function DashboardScreen({ engine, setTabAndUrl }) {
   const effectiveRate = netGains > 0 ? (totalTax / netGains) * 100 : 0
   const filerLabel = engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'
   const hasAnyData = (txns || []).length > 0 || Object.keys(holdings || {}).length > 0
+  const hasHoldings = totalHoldingsQty > 0
 
   return (
     <div className="space-y-4">
@@ -678,8 +691,15 @@ function DashboardScreen({ engine, setTabAndUrl }) {
           <div>
             <div className="text-xs text-slate-400">Tax payable (estimated)</div>
             <div className="mt-1 text-3xl font-extrabold tracking-tight text-slate-50">{formatPKR(totalTax)}</div>
-            <div className="mt-2 inline-flex items-center rounded-full border border-slate-700 bg-slate-950/30 px-2.5 py-1 text-xs text-slate-300">
-              Status: <span className={engine.taxCalculator.isFiler ? 'ml-1 text-emerald-300 font-semibold' : 'ml-1 text-rose-300 font-semibold'}>{filerLabel}</span>
+            <div
+              className={
+                'mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ' +
+                (engine.taxCalculator.isFiler
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                  : 'border-rose-500/30 bg-rose-500/10 text-rose-200')
+              }
+            >
+              {filerLabel}
             </div>
           </div>
 
@@ -705,25 +725,26 @@ function DashboardScreen({ engine, setTabAndUrl }) {
         </div>
       </div>
 
-      {!hasAnyData ? (
+      {!hasHoldings ? (
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
           <div className="text-sm font-semibold text-slate-100">Get started</div>
-          <div className="mt-1 text-sm text-slate-400">Add your first BUY transaction to see holdings and tax insights.</div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-1 text-sm text-slate-400">Add a BUY transaction to create your first holding.</div>
+
+          <div className="mt-3">
             <button
               type="button"
               onClick={() => setTabAndUrl('add')}
-              className="rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2 text-sm"
+              className="w-full rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2.5 text-sm"
             >
               Add Transaction
             </button>
-            <button
-              type="button"
-              onClick={() => setTabAndUrl('portfolio')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
-            >
-              View Portfolio
-            </button>
+          </div>
+
+          <div className="mt-3 rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-xs text-slate-300 space-y-1">
+            <div className="text-slate-100 font-semibold">Quick definitions</div>
+            <div><span className="font-semibold text-slate-100">FIFO</span>: Oldest shares are treated as sold first.</div>
+            <div><span className="font-semibold text-slate-100">T+2</span>: PSX settlement is typically trade date + 2 business days.</div>
+            <div><span className="font-semibold text-slate-100">Capital gain</span>: Net sale proceeds − cost basis (after fees).</div>
           </div>
         </div>
       ) : (
@@ -892,17 +913,19 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
   const [symbol, setSymbol] = React.useState('')
   const [quantity, setQuantity] = React.useState('')
   const [price, setPrice] = React.useState('')
+  const [feePercent, setFeePercent] = React.useState('')
   const [date, setDate] = React.useState(todayISO())
   const [message, setMessage] = React.useState(null)
 
   const s = (symbol || '').trim().toUpperCase()
   const q = Number(quantity || 0)
   const p = Number(price || 0)
+  const fee = feePercent === '' ? undefined : feePercent
 
   let preview = null
   if (type === 'SELL' && s && q > 0 && p > 0) {
     try {
-      const sale = engine.fifoQueue.calculateSale(s, q, p, date)
+      const sale = engine.fifoQueue.calculateSale(s, q, p, date, fee)
       const tax = engine.taxCalculator.calculateTaxForSale(sale)
       const gain = Number(sale.capitalGain || 0)
       const taxValue = Number(tax.totalTax || 0)
@@ -921,7 +944,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
     if (p <= 0) return setMessage({ kind: 'error', text: 'Enter a valid price' })
 
     try {
-      engine.fifoQueue.addTransaction(type, s, q, p, date)
+      engine.fifoQueue.addTransaction(type, s, q, p, date, fee)
       persist()
       setMessage({ kind: 'ok', text: `${type} saved for ${s}` })
       try {
@@ -931,6 +954,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
       } catch {}
       setQuantity('')
       setPrice('')
+      setFeePercent('')
       onSaved()
     } catch (err) {
       setMessage({ kind: 'error', text: err?.message || 'Failed to add transaction' })
@@ -997,6 +1021,17 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
                 placeholder="100.00"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400">Brokerage/Fees (%)</label>
+            <input
+              value={feePercent}
+              onChange={(e) => setFeePercent(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              placeholder="0.5 (default)"
+            />
+            <div className="mt-1 text-[11px] text-slate-500">Leave blank to use the default 0.5% NCCPL incidental expense adjustment.</div>
           </div>
 
           <div>
