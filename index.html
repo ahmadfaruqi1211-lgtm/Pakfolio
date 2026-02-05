@@ -54,100 +54,96 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Home Tab -->
+            <!-- Home Tab (Bento Dashboard) -->
             <div id="tab-home" class="tab-content active">
-                <!-- Tax Summary - Now inside Home tab -->
-                <section class="tax-summary-hero tax-summary-compact" id="taxSummaryHero">
-                    <!-- Main Tax Amount -->
-                    <div class="tax-hero-section">
-                        <div class="hero-label">Total Tax Liability</div>
-                        <div class="hero-value" id="heroTaxLiability">Rs. 0.00</div>
-                        <div class="hero-context">
-                            <span>on realized gains of </span>
-                            <span class="hero-context-amount" id="heroContextGains">Rs. 0.00</span>
+                <div class="bento-grid-container">
+                    
+                    <!-- 1. Tax Summary Cell (Main Hero) -->
+                    <div class="bento-cell area-summary" id="taxSummaryHero">
+                        <div class="glass-highlight"></div>
+                        <div class="hero-header">
+                            <h2 class="hero-label">Total Estimated Tax</h2>
+                            <div class="tax-rate-pill" id="taxRateBadge">
+                                <span id="taxRateValue">15%</span>
+                                <span id="taxRateStatus" class="opacity-75">Filer</span>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-main-value">
+                            <span class="currency">Rs.</span>
+                            <span class="value" id="heroTaxLiability">0.00</span>
+                        </div>
+                        
+                        <div class="hero-context-clean">
+                            on realized gains of <span class="highlight-text" id="heroContextGains">Rs. 0.00</span>
+                        </div>
+                        
+                        <!-- Compact Metrics inside Summary -->
+                        <div class="mini-metrics-row">
+                            <div class="mini-metric">
+                                <span class="label">Net Gain</span>
+                                <span class="value gain-text" id="heroNetGain">0</span>
+                            </div>
+                            <div class="mini-metric">
+                                <span class="label">Cost Basis</span>
+                                <span class="value" id="heroCostBasis">0</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Tax Rate Badge -->
-                    <div class="tax-rate-badge" id="taxRateBadge">
-                        <span class="tax-rate-label">Tax Rate:</span>
-                        <span class="tax-rate-value" id="taxRateValue">15%</span>
-                        <span class="tax-rate-status" id="taxRateStatus">(Filer)</span>
+                    <!-- 2. Actions Cell -->
+                    <div class="bento-cell area-actions flex-center-col" onclick="app.switchTab('add')" style="cursor: pointer; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">
+                        <div class="action-icon-circle">
+                            <i data-lucide="plus" style="width: 32px; height: 32px; color: #10B981;"></i>
+                        </div>
+                        <h3>Add Transaction</h3>
+                        <p class="text-sm opacity-70">Record a buy or sell</p>
                     </div>
 
-                    <!-- Compact Metrics Grid -->
-                    <div class="hero-metrics-compact">
-                        <div class="metric-compact">
-                            <span class="metric-label-compact">Cost</span>
-                            <span class="metric-value-compact" id="heroCostBasis">Rs. 0</span>
-                        </div>
-                        <div class="metric-compact">
-                            <span class="metric-label-compact">Proceeds</span>
-                            <span class="metric-value-compact" id="heroSaleProceeds">Rs. 0</span>
-                        </div>
-                        <div class="metric-compact">
-                            <span class="metric-label-compact">Gain</span>
-                            <span class="metric-value-compact gain" id="heroNetGain">Rs. 0</span>
-                        </div>
-                        <div class="metric-compact highlight">
-                            <span class="metric-label-compact">Tax</span>
-                            <span class="metric-value-compact tax" id="heroYourTax">Rs. 0</span>
+                    <!-- 3. Welcome/Onboarding Cell (Dynamic) -->
+                    <div id="welcomeEmptyState" class="bento-cell area-marketing" style="display: none;">
+                        <div class="onboarding-content">
+                            <div class="icon-box-glow">
+                                <i data-lucide="sparkles" class="text-primary"></i>
+                            </div>
+                            <h3>Welcome to PakFolio</h3>
+                            <p>Your smart tax companion for PSX.</p>
+                            <div class="steps-list-compact">
+                                <div class="step-item">
+                                    <span class="step-num">1</span> Add Purchases
+                                </div>
+                                <div class="step-item">
+                                    <span class="step-num">2</span> Track Gains
+                                </div>
+                                <div class="step-item">
+                                    <span class="step-num">3</span> Auto-Calculate Tax
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </section>
 
-                <!-- Welcome Empty State (shown when no data) -->
-                <div id="welcomeEmptyState" class="welcome-empty-state" style="display: none;">
-                    <div class="glass-card animate-scale-in" style="text-align: center; padding: 48px 32px;">
-                        <!-- Welcome Icon -->
-                        <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center;">
-                            <i data-lucide="sparkles" style="width: 40px; height: 40px; color: var(--success-green);"></i>
+                     <!-- 4. Quick Stats / Holdings Preview -->
+                     <div class="bento-cell area-settings">
+                        <div class="cell-header">
+                            <h3>Analytics</h3>
                         </div>
-
-                        <!-- Welcome Text -->
-                        <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Welcome to PakFolio!</h2>
-                        <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 32px;">Your smart tax companion for Pakistan stocks</p>
-
-                        <!-- Steps -->
-                        <div style="display: flex; flex-direction: column; gap: 16px; max-width: 320px; margin: 0 auto 32px;">
-                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
-                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">1</div>
-                                <span style="color: var(--text-primary); font-size: 0.95rem;">Add your first stock purchase</span>
+                        <div class="stats-list">
+                            <div class="stat-row">
+                                <span>Proceeds</span>
+                                <span id="heroSaleProceeds" class="font-mono">Rs. 0</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
-                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">2</div>
-                                <span style="color: var(--text-primary); font-size: 0.95rem;">Track your profits in real-time</span>
+                            <div class="stat-row">
+                                <span>Tax Rate</span>
+                                <span class="font-mono">15%</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
-                                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">3</div>
-                                <span style="color: var(--text-primary); font-size: 0.95rem;">Calculate exact tax before selling</span>
+                             <div class="stat-row">
+                                <span>Status</span>
+                                <span class="status-active">Active</span>
                             </div>
                         </div>
+                     </div>
 
-                        <!-- Benefits -->
-                        <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 32px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="check-circle" style="width: 18px; height: 18px; color: var(--success-green);"></i>
-                                <span style="color: var(--text-secondary); font-size: 0.85rem;">FBR Compliant</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="shield" style="width: 18px; height: 18px; color: var(--success-green);"></i>
-                                <span style="color: var(--text-secondary); font-size: 0.85rem;">100% Private</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i data-lucide="file-text" style="width: 18px; height: 18px; color: var(--success-green);"></i>
-                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Export Reports</span>
-                            </div>
-                        </div>
-
-                        <!-- CTA Button -->
-                        <button class="btn-modern" onclick="app.switchTab('add')" style="font-size: 1rem; padding: 16px 32px;">
-                            <i data-lucide="plus" class="lucide-sm"></i>
-                            Add Your First Transaction
-                        </button>
-                    </div>
                 </div>
-
             </div>
 
             <!-- Add Transaction Tab -->
