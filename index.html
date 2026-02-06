@@ -575,6 +575,62 @@
             </div>
         </div>
 
+        <!-- PWA Install Banner (Hidden by default) -->
+        <div id="pwaInstallBanner" class="pwa-install-banner hide-banner">
+            <div class="pwa-install-content">
+                <div class="pwa-install-icon">
+                    <i data-lucide="download"></i>
+                </div>
+                <div class="pwa-install-text">
+                    <span class="pwa-install-title">Install PakFolio</span>
+                    <span class="pwa-install-desc">Fast, secure access to your stocks.</span>
+                </div>
+            </div>
+            <div class="pwa-install-actions">
+                <button class="btn-modern btn-modern-sm btn-pwa-dismiss" onclick="app.dismissInstallPrompt()">Not Now</button>
+                <button class="btn-modern btn-modern-sm btn-pwa-install" onclick="app.executeInstallPrompt()">Install</button>
+            </div>
+        </div>
+
+        <!-- iOS Install Modal (Add to Home Screen) -->
+        <div id="iosInstallModal" class="modal-overlay ios-modal">
+            <div class="modal-container-modern ios-container animate-slide-up">
+                <div class="ios-modal-header">
+                    <img src="pwa-192x192.png" alt="PakFolio" class="ios-app-icon">
+                    <div class="ios-header-text">
+                        <h3>Add to Home Screen</h3>
+                        <p>Install PakFolio on your iPhone</p>
+                    </div>
+                    <button class="ios-close-btn" onclick="app.hideIosInstallModal()">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="ios-modal-steps">
+                    <div class="ios-step">
+                        <div class="ios-step-num">1</div>
+                        <div class="ios-step-content">
+                            Tap the <strong>Share</strong> button in Safari's bottom bar.
+                            <div class="ios-icon-hint"><i data-lucide="share"></i> (usually at the bottom center)</div>
+                        </div>
+                    </div>
+                    <div class="ios-step">
+                        <div class="ios-step-num">2</div>
+                        <div class="ios-step-content">
+                            Scroll down and select <strong>Add to Home Screen</strong>.
+                            <div class="ios-icon-hint"><i data-lucide="plus-square"></i></div>
+                        </div>
+                    </div>
+                    <div class="ios-step">
+                        <div class="ios-step-num">3</div>
+                        <div class="ios-step-content">
+                            Tap <strong>Add</strong> in the top right corner.
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-modern btn-full" onclick="app.hideIosInstallModal()">Got it</button>
+            </div>
+        </div>
+
         <!-- Bottom Tab Navigation - Modern -->
         <nav class="tab-bar-modern">
             <div class="tab-bar-container">

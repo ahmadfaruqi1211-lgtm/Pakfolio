@@ -39,10 +39,14 @@ class PakistanStockTaxApp {
         this.pdfGenerator = new PDFGenerator();
         this.corporateActions = new CorporateActionsManager(this.fifoQueue, this.storageManager);
 
+        // PWA Install State
+        this.deferredPrompt = null;
+        this.setupPWAInstall();
+
         // Initialize UI
         this.initializeEventListeners();
         this.setTodayDate();
-        Promise.resolve(this.loadData()).catch(() => {});
+        Promise.resolve(this.loadData()).catch(() => { });
 
         // Wrap initial display update in try-catch
         try {
@@ -75,6 +79,129 @@ class PakistanStockTaxApp {
             filerToggle.addEventListener('change', (e) => {
                 this.handleFilerStatusChange(e.target.checked);
             });
+        }
+
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab-btn-modern');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-tab');
+                this.switchTab(target);
+            });
+        });
+    }
+
+    /**
+     * Setup PWA Installation Logic
+     */
+    setupPWAInstall() {
+        // 1. Check if already installed
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (isStandalone) {
+            console.log('PWA: Running in standalone mode, skipping install prompt');
+            return;
+        }
+
+        // 2. Handle Android/Chrome Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA: beforeinstallprompt event fired');
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            this.deferredPrompt = e;
+
+            // Check if user has already dismissed it in this session or recently
+            const isDismissed = localStorage.getItem('pwaPromptDismissed');
+            if (!isDismissed) {
+                // Show the banner after 5 seconds to be non-intrusive
+                setTimeout(() => this.showInstallBanner(), 5000);
+            }
+        });
+
+        // 3. Handle App Installed event
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA: Application installed successfully');
+            this.hideInstallBanner();
+            this.deferredPrompt = null;
+        });
+
+        // 4. Manual iOS Detection (Safari doesn't support beforeinstallprompt)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS && !isStandalone) {
+            const isDismissed = localStorage.getItem('pwaPromptDismissed');
+            if (!isDismissed) {
+                setTimeout(() => this.showInstallBanner(), 6000);
+            }
+        }
+    }
+
+    showInstallBanner() {
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) {
+            banner.classList.remove('hide-banner');
+            console.log('PWA: Install banner shown');
+        }
+    }
+
+    hideInstallBanner() {
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) {
+            banner.classList.add('hide-banner');
+        }
+    }
+
+    dismissInstallPrompt() {
+        this.hideInstallBanner();
+        // Record dismissal to avoid pestering (expire after 7 days)
+        localStorage.setItem('pwaPromptDismissed', Date.now());
+        console.log('PWA: Install prompt dismissed by user');
+    }
+
+    async executeInstallPrompt() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        if (isIOS) {
+            this.showIosInstallModal();
+            this.hideInstallBanner();
+            return;
+        }
+
+        if (!this.deferredPrompt) {
+            console.warn('PWA: No deferred prompt available');
+            this.hideInstallBanner();
+            return;
+        }
+
+        // Show the native prompt
+        this.deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await this.deferredPrompt.userChoice;
+        console.log(`PWA: User response to install prompt: ${outcome}`);
+
+        // Clear the deferred prompt variable
+        this.deferredPrompt = null;
+        this.hideInstallBanner();
+    }
+
+    showIosInstallModal() {
+        const modal = document.getElementById('iosInstallModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            // Trigger animation
+            setTimeout(() => {
+                const container = modal.querySelector('.ios-container');
+                if (container) container.classList.add('active');
+            }, 10);
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+
+    hideIosInstallModal() {
+        const modal = document.getElementById('iosInstallModal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
 
@@ -1306,7 +1433,7 @@ class PakistanStockTaxApp {
             onConfirm: () => {
                 this.fifoQueue.reset();
                 Promise.resolve(this.storageManager.clearAllData())
-                    .catch(() => {})
+                    .catch(() => { })
                     .finally(() => {
                         this.updateAllDisplays();
                         this.showMessage('All data has been permanently deleted', 'success');
@@ -1579,8 +1706,8 @@ class PakistanStockTaxApp {
      * Guarantees: NEVER throws, ALWAYS returns a valid string
      */
     formatCurrency(input) {
-    return safeFormatCurrency(input);
-}
+        return safeFormatCurrency(input);
+    }
 
     /**
      * Animate number counting effect
