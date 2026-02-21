@@ -14,6 +14,7 @@ class StorageManager {
     constructor(encryptionKey = 'PSX-TAX-CALC-2025') {
         this.storageKey = 'psx_tax_calculator_data';
         this.settingsKey = 'psx_tax_calculator_settings';
+        this.profileKey = 'pakfolio_user_profile';
         this.encryptionKey = encryptionKey;
         this.autoSaveEnabled = true;
         this.dataVersion = '1.0';
@@ -602,6 +603,66 @@ class StorageManager {
             localStorage.removeItem(backup.key);
             console.log(`✓ Deleted old backup: ${backup.key}`);
         }
+    }
+
+    // ─── License / Freemium ──────────────────────────────────────────────────
+
+    getUserProfile() {
+        const defaults = {
+            isPremium: false,
+            licenseKey: '',
+            usageCount: { taxReport: 0, whatIf: 0 }
+        };
+        try {
+            const raw = localStorage.getItem(this.profileKey);
+            if (!raw) return { ...defaults };
+            const parsed = JSON.parse(raw);
+            if (!parsed.usageCount || typeof parsed.usageCount !== 'object') {
+                parsed.usageCount = { ...defaults.usageCount };
+            }
+            return { ...defaults, ...parsed };
+        } catch (e) {
+            return { ...defaults };
+        }
+    }
+
+    saveUserProfile(profile) {
+        try {
+            localStorage.setItem(this.profileKey, JSON.stringify(profile));
+        } catch (e) {
+            console.error('Failed to save user profile:', e);
+        }
+    }
+
+    validateKey(key) {
+        if (!key || typeof key !== 'string') return false;
+        return /^PF-2026-\d{4}$/.test(key.trim());
+    }
+
+    activateLicense(key) {
+        if (!this.validateKey(key)) {
+            return { success: false, message: 'Invalid key. Expected format: PF-2026-XXXX (e.g. PF-2026-1234)' };
+        }
+        const profile = this.getUserProfile();
+        profile.isPremium = true;
+        profile.licenseKey = key.trim();
+        this.saveUserProfile(profile);
+        return { success: true, message: 'Pro license activated! All features are now unlocked.' };
+    }
+
+    incrementUsage(feature) {
+        const profile = this.getUserProfile();
+        if (profile.isPremium) return;
+        if (!profile.usageCount) profile.usageCount = {};
+        profile.usageCount[feature] = (profile.usageCount[feature] || 0) + 1;
+        this.saveUserProfile(profile);
+    }
+
+    canUseFeature(feature) {
+        const limits = { taxReport: 3, whatIf: 2 };
+        const profile = this.getUserProfile();
+        if (profile.isPremium) return true;
+        return (profile.usageCount[feature] || 0) < (limits[feature] || 0);
     }
 }
 

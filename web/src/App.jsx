@@ -1,4 +1,5 @@
 ﻿import React from 'react'
+import LicenseSettings from './LicenseSettings'
 
 function formatNumber(value) {
   const n = Number(value)
@@ -80,6 +81,47 @@ function useAppEngine() {
   )
 
   return { engine, persist, persistSettings, refresh, hydrating }
+}
+
+const LICENSE_LIMITS = { taxReport: 3, whatIf: 2 }
+
+function useLicense(engine) {
+  const defaultProfile = { isPremium: false, licenseKey: '', usageCount: { taxReport: 0, whatIf: 0 } }
+  const [profile, setProfile] = React.useState(defaultProfile)
+
+  React.useEffect(() => {
+    if (!engine.ready) return
+    setProfile(engine.storageManager.getUserProfile())
+  }, [engine])
+
+  const canUse = React.useCallback(
+    (feature) => {
+      if (profile.isPremium) return true
+      return (profile.usageCount[feature] || 0) < (LICENSE_LIMITS[feature] || 0)
+    },
+    [profile]
+  )
+
+  const consume = React.useCallback(
+    (feature) => {
+      if (!engine.ready || profile.isPremium) return
+      engine.storageManager.incrementUsage(feature)
+      setProfile(engine.storageManager.getUserProfile())
+    },
+    [engine, profile]
+  )
+
+  const activate = React.useCallback(
+    (key) => {
+      if (!engine.ready) return { success: false, message: 'Engine not ready' }
+      const result = engine.storageManager.activateLicense(key)
+      if (result.success) setProfile(engine.storageManager.getUserProfile())
+      return result
+    },
+    [engine]
+  )
+
+  return { profile, canUse, consume, activate }
 }
 
 function SkeletonBlock({ className }) {
@@ -210,7 +252,131 @@ function Card({ title, subtitle, children }) {
   )
 }
 
-function TaxReportScreen({ engine }) {
+const WHATSAPP_NUMBER = '923142345679'
+const WHATSAPP_DISPLAY = '0314-2345679'
+const JAZZCASH_NUMBER = '03142345679'
+const BANK_IBAN = 'PK50UNIL0109000285756845'
+const BANK_NAME = 'Imbisat Ahmed'
+const PRO_PRICE = 'Rs. 2,500/year'
+
+function UpgradeModal({ onClose }) {
+  const whatsappMsg = encodeURIComponent(
+    `Hi! I want to purchase PakFolio Pro (${PRO_PRICE}). I have made the payment and will share the receipt for my license key.`
+  )
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm px-4 pb-6">
+      <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 flex flex-col max-h-[88vh]">
+        {/* Sticky header */}
+        <div className="flex items-start justify-between p-5 border-b border-slate-800 flex-shrink-0">
+          <div>
+            <div className="text-base font-bold text-slate-100">Unlock Pro Features</div>
+            <div className="text-emerald-400 font-semibold text-sm mt-0.5">{PRO_PRICE}</div>
+          </div>
+          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xl leading-none pl-3">✕</button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+          {/* Pro features */}
+          <div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">What You Get</div>
+            <ul className="space-y-1.5 text-sm text-slate-300">
+              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Unlimited Tax Report exports</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Unlimited What-If scenarios</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Corporate Actions (Bonus / Right Issues)</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Bulk CSV Upload / Import</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Priority WhatsApp support</li>
+            </ul>
+          </div>
+
+          {/* Payment methods */}
+          <div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Payment Methods</div>
+            <div className="space-y-2">
+              <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3.5">
+                <div className="text-[11px] font-bold text-emerald-400 mb-1.5">JazzCash / EasyPaisa</div>
+                <div className="font-mono text-base text-slate-100 font-bold tracking-wide">{JAZZCASH_NUMBER}</div>
+                <div className="text-xs text-slate-400 mt-0.5">Send {PRO_PRICE}</div>
+              </div>
+              <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3.5">
+                <div className="text-[11px] font-bold text-emerald-400 mb-1.5">Bank Transfer (NIFT / IBFT)</div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <span className="text-slate-500">Name</span>
+                  <span className="text-slate-100 font-semibold">{BANK_NAME}</span>
+                  <span className="text-slate-500">IBAN</span>
+                  <span className="font-mono text-slate-100 font-semibold break-all">{BANK_IBAN}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">How It Works</div>
+            <ol className="space-y-2">
+              {[
+                `Pay ${PRO_PRICE} via JazzCash, EasyPaisa, or bank transfer above`,
+                'Screenshot your payment / transaction receipt',
+                `Send the screenshot on WhatsApp to ${WHATSAPP_DISPLAY}`,
+                'Receive your license key (PF-2026-XXXX) — usually within a few hours',
+                'Go to Settings → License and enter the key to activate Pro',
+              ].map((step, i) => (
+                <li key={i} className="flex gap-2.5 text-sm text-slate-300">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        {/* Sticky footer */}
+        <div className="p-5 border-t border-slate-800 space-y-2 flex-shrink-0">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 py-3 text-sm font-semibold text-emerald-300"
+          >
+            WhatsApp {WHATSAPP_DISPLAY}
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl bg-slate-800 border border-slate-700 py-2.5 text-sm text-slate-400"
+          >
+            Maybe Later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LockedFeatureScreen({ featureName, showUpgrade }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center py-20 px-6 space-y-4">
+      <div className="text-5xl">🔒</div>
+      <div className="text-base font-bold text-slate-100">{featureName} — Pro Only</div>
+      <div className="text-sm text-slate-400 max-w-xs leading-relaxed">
+        This feature is included in the Pro plan. Upgrade for {PRO_PRICE} to unlock it along with unlimited exports and more.
+      </div>
+      <button
+        type="button"
+        onClick={showUpgrade}
+        className="mt-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-6 py-2.5 text-sm font-semibold text-emerald-300"
+      >
+        Upgrade to Pro — {PRO_PRICE}
+      </button>
+    </div>
+  )
+}
+
+function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
   const realized = engine.fifoQueue.getRealizedGains() || []
   const transactions = engine.fifoQueue.getTransactions() || []
 
@@ -226,25 +392,42 @@ function TaxReportScreen({ engine }) {
 
   const showSuperTax = totalGain > 150_000_000
 
-  const exportPdf = () => {
+  const taxUsed = (usageCount && usageCount.taxReport) || 0
+  const taxLimit = LICENSE_LIMITS.taxReport
+
+  const handleExportPdf = () => {
+    if (!isPremium && taxUsed >= taxLimit) {
+      showUpgrade()
+      return
+    }
+    if (typeof window === 'undefined' || !window.PDFGenerator) {
+      alert('PDF Generator not available')
+      return
+    }
+    if (typeof window.jspdf === 'undefined') {
+      alert('jsPDF library not loaded')
+      return
+    }
     try {
-      if (typeof window === 'undefined' || !window.PDFGenerator) {
-        alert('PDF Generator not available')
-        return
-      }
-      if (typeof window.jspdf === 'undefined') {
-        alert('jsPDF library not loaded')
-        return
-      }
       const pdf = new window.PDFGenerator()
       pdf.generateTaxReport(engine.fifoQueue, engine.taxCalculator, transactions)
+      if (!isPremium) consume('taxReport')
     } catch (e) {
       alert(e?.message || 'Failed to export PDF')
     }
   }
 
-  const exportJson = () => {
-    engine.storageManager.exportToFile(engine.fifoQueue.exportData())
+  const handleExportJson = () => {
+    if (!isPremium && taxUsed >= taxLimit) {
+      showUpgrade()
+      return
+    }
+    try {
+      engine.storageManager.exportToFile(engine.fifoQueue.exportData())
+      if (!isPremium) consume('taxReport')
+    } catch (e) {
+      alert(e?.message || 'Failed to export data')
+    }
   }
 
   return (
@@ -267,20 +450,34 @@ function TaxReportScreen({ engine }) {
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        {!isPremium && (
+          <div className="mt-2 text-xs text-slate-500 text-right">
+            {taxUsed}/{taxLimit} exports used
+          </div>
+        )}
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={exportPdf}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            onClick={handleExportPdf}
+            className={`rounded-xl border py-2 text-sm font-semibold ${
+              !isPremium && taxUsed >= taxLimit
+                ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+                : 'bg-slate-950/40 border-slate-800 text-slate-100'
+            }`}
           >
-            Export PDF
+            {!isPremium && taxUsed >= taxLimit ? '🔒 Export PDF' : 'Export PDF'}
           </button>
           <button
             type="button"
-            onClick={exportJson}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            onClick={handleExportJson}
+            className={`rounded-xl border py-2 text-sm font-semibold ${
+              !isPremium && taxUsed >= taxLimit
+                ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+                : 'bg-slate-950/40 border-slate-800 text-slate-100'
+            }`}
           >
-            Export JSON
+            {!isPremium && taxUsed >= taxLimit ? '🔒 Export JSON' : 'Export JSON'}
           </button>
         </div>
       </Card>
@@ -601,7 +798,7 @@ function CorporateActionsScreen({ engine, persist, onChanged }) {
   )
 }
 
-function MoreScreen({ engine, setTabAndUrl }) {
+function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
   return (
     <div className="space-y-4">
       <Card title="Reports" subtitle="Tax and history">
@@ -627,10 +824,14 @@ function MoreScreen({ engine, setTabAndUrl }) {
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => setTabAndUrl('corporate')}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            onClick={() => (isPremium ? setTabAndUrl('corporate') : showUpgrade())}
+            className={`rounded-xl border py-2 text-sm font-semibold ${
+              isPremium
+                ? 'bg-slate-950/40 border-slate-800 text-slate-100'
+                : 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+            }`}
           >
-            Corporate Actions
+            {isPremium ? 'Corporate Actions' : '🔒 Corp. Actions'}
           </button>
           <button
             type="button"
@@ -640,6 +841,26 @@ function MoreScreen({ engine, setTabAndUrl }) {
             What-If
           </button>
         </div>
+        {!isPremium && (
+          <div className="mt-1.5 text-xs text-slate-500">Bonus shares &amp; right issues require Pro.</div>
+        )}
+      </Card>
+
+      <Card title="Bulk Import" subtitle="Upload multiple trades at once">
+        <button
+          type="button"
+          onClick={() => (isPremium ? alert('Bulk CSV Upload — coming soon!') : showUpgrade())}
+          className={`w-full rounded-xl border py-2 text-sm font-semibold ${
+            isPremium
+              ? 'bg-slate-950/40 border-slate-800 text-slate-100'
+              : 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+          }`}
+        >
+          {isPremium ? 'Bulk CSV Upload' : '🔒 Bulk CSV Upload — Pro Only'}
+        </button>
+        {!isPremium && (
+          <div className="mt-1.5 text-xs text-slate-500">Upgrade to Pro to import trades in bulk via CSV.</div>
+        )}
       </Card>
 
       <Card title="Settings" subtitle="Tax status and data">
@@ -1133,7 +1354,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
   )
 }
 
-function SettingsScreen({ engine, persistSettings, onReset }) {
+function SettingsScreen({ engine, persistSettings, onReset, profile, activate }) {
   const [isFiler, setIsFiler] = React.useState(Boolean(engine.taxCalculator.isFiler))
 
   const toggle = () => {
@@ -1198,11 +1419,15 @@ function SettingsScreen({ engine, persistSettings, onReset }) {
           </button>
         </div>
       </Card>
+
+      <Card title="License" subtitle="Manage your plan">
+        <LicenseSettings profile={profile || { isPremium: false, licenseKey: '', usageCount: { taxReport: 0, whatIf: 0 } }} onActivate={activate || (() => ({ success: false, message: 'Not ready' }))} />
+      </Card>
     </div>
   )
 }
 
-function WhatIfScreen({ engine }) {
+function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
   const [symbol, setSymbol] = React.useState('')
   const [quantity, setQuantity] = React.useState('')
   const [price, setPrice] = React.useState('')
@@ -1214,6 +1439,9 @@ function WhatIfScreen({ engine }) {
   const q = Number(quantity || 0)
   const p = Number(price || 0)
 
+  const whatIfUsed = (usageCount && usageCount.whatIf) || 0
+  const whatIfLimit = LICENSE_LIMITS.whatIf
+
   const run = (mode) => {
     setError(null)
     setResult(null)
@@ -1221,12 +1449,12 @@ function WhatIfScreen({ engine }) {
     const ok = typeof window !== 'undefined' && window.WhatIfScenarios
     if (!ok) {
       setError('What-If engine not detected')
-      return
+      return false
     }
 
-    if (!s) return setError('Enter a symbol')
-    if (q <= 0) return setError('Enter a valid quantity')
-    if (p <= 0) return setError('Enter a valid price')
+    if (!s) { setError('Enter a symbol'); return false }
+    if (q <= 0) { setError('Enter a valid quantity'); return false }
+    if (p <= 0) { setError('Enter a valid price'); return false }
 
     try {
       const whatIf = new window.WhatIfScenarios(engine.fifoQueue, engine.taxCalculator)
@@ -1234,20 +1462,30 @@ function WhatIfScreen({ engine }) {
       if (mode === 'timing') {
         const r = whatIf.analyzeOptimalTiming(s, q, p)
         setResult({ mode, r })
-        return
+        return true
       }
 
       if (mode === 'filer') {
         const sale = engine.fifoQueue.calculateSale(s, q, p, date)
         const r = whatIf.compareFilerStatus(sale)
         setResult({ mode, r })
-        return
+        return true
       }
 
       setError('Unknown scenario')
     } catch (e) {
       setError(e?.message || 'Failed to run scenario')
     }
+    return false
+  }
+
+  const handleRun = (mode) => {
+    if (!isPremium && whatIfUsed >= whatIfLimit) {
+      showUpgrade()
+      return
+    }
+    const success = run(mode)
+    if (success && !isPremium) consume('whatIf')
   }
 
   return (
@@ -1301,20 +1539,34 @@ function WhatIfScreen({ engine }) {
             </div>
           ) : null}
 
+          {!isPremium && (
+            <div className="text-xs text-slate-500 text-right">
+              {whatIfUsed}/{whatIfLimit} scenarios used
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => run('timing')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+              onClick={() => handleRun('timing')}
+              className={`rounded-xl border py-2 text-sm font-semibold ${
+                !isPremium && whatIfUsed >= whatIfLimit
+                  ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-100'
+              }`}
             >
-              Timing
+              {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Timing' : 'Timing'}
             </button>
             <button
               type="button"
-              onClick={() => run('filer')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+              onClick={() => handleRun('filer')}
+              className={`rounded-xl border py-2 text-sm font-semibold ${
+                !isPremium && whatIfUsed >= whatIfLimit
+                  ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-100'
+              }`}
             >
-              Filer Compare
+              {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Filer Compare' : 'Filer Compare'}
             </button>
           </div>
         </div>
@@ -1361,6 +1613,9 @@ function WhatIfScreen({ engine }) {
 
 export default function App() {
   const { engine, persist, persistSettings, refresh, hydrating } = useAppEngine()
+  const { profile, consume, activate } = useLicense(engine)
+  const [upgradeVisible, setUpgradeVisible] = React.useState(false)
+  const showUpgrade = React.useCallback(() => setUpgradeVisible(true), [])
 
   const parseTabFromUrl = React.useCallback(() => {
     try {
@@ -1422,8 +1677,17 @@ export default function App() {
 
   return (
     <div className="min-h-dvh flex flex-col">
+      {upgradeVisible && <UpgradeModal onClose={() => setUpgradeVisible(false)} />}
+
       <header className="px-4 pt-6 pb-4">
-        <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
+          {profile.isPremium && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+              PRO
+            </span>
+          )}
+        </div>
         <div className="text-xl font-bold tracking-tight">
           {tab === 'home'
             ? 'Dashboard'
@@ -1449,12 +1713,16 @@ export default function App() {
         {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} />) : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} onRefresh={refresh} />) : null}
-        {tab === 'whatif' ? <WhatIfScreen engine={engine} /> : null}
-        {tab === 'tax' ? <TaxReportScreen engine={engine} /> : null}
+        {tab === 'whatif' ? <WhatIfScreen engine={engine} isPremium={profile.isPremium} usageCount={profile.usageCount} showUpgrade={showUpgrade} consume={consume} /> : null}
+        {tab === 'tax' ? <TaxReportScreen engine={engine} isPremium={profile.isPremium} usageCount={profile.usageCount} showUpgrade={showUpgrade} consume={consume} /> : null}
         {tab === 'history' ? (hydrating ? <HistorySkeleton /> : <TransactionHistoryScreen engine={engine} />) : null}
-        {tab === 'corporate' ? <CorporateActionsScreen engine={engine} persist={persist} onChanged={refresh} /> : null}
-        {tab === 'more' ? <MoreScreen engine={engine} setTabAndUrl={setTabAndUrl} /> : null}
-        {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} /> : null}
+        {tab === 'corporate' ? (
+          profile.isPremium
+            ? <CorporateActionsScreen engine={engine} persist={persist} onChanged={refresh} />
+            : <LockedFeatureScreen featureName="Corporate Actions" showUpgrade={showUpgrade} />
+        ) : null}
+        {tab === 'more' ? <MoreScreen engine={engine} setTabAndUrl={setTabAndUrl} isPremium={profile.isPremium} showUpgrade={showUpgrade} /> : null}
+        {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} profile={profile} activate={activate} /> : null}
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
