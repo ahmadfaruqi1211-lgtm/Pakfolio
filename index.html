@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PakFolio - Pakistan Stock Tax Calculator</title>
-    <meta name="description" content="Calculate your exact PSX capital gains tax before you sell. FBR-compliant FIFO method for Pakistan stocks.">
+    <meta name="description"
+        content="Calculate your exact PSX capital gains tax before you sell. FBR-compliant FIFO method for Pakistan stocks.">
 
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#10B981">
+    <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="PakFolio">
     <meta name="application-name" content="PakFolio">
-    <meta name="msapplication-TileColor" content="#0f172a">
+    <meta name="msapplication-TileColor" content="#f8fafc">
     <meta name="msapplication-config" content="/browserconfig.xml">
 
     <!-- Web App Manifest -->
@@ -26,7 +28,9 @@
     <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -36,6 +40,7 @@
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
+
 <body>
     <div class="container">
         <!-- Header - Compact -->
@@ -57,7 +62,7 @@
             <!-- Home Tab (Bento Dashboard) -->
             <div id="tab-home" class="tab-content active">
                 <div class="bento-grid-container">
-                    
+
                     <!-- 1. Tax Summary Cell (Main Hero) -->
                     <div class="bento-cell area-summary" id="taxSummaryHero">
                         <div class="glass-highlight"></div>
@@ -68,16 +73,16 @@
                                 <span id="taxRateStatus" class="opacity-75">Filer</span>
                             </div>
                         </div>
-                        
+
                         <div class="hero-main-value">
                             <span class="currency">Rs.</span>
                             <span class="value" id="heroTaxLiability">0.00</span>
                         </div>
-                        
+
                         <div class="hero-context-clean">
                             on realized gains of <span class="highlight-text" id="heroContextGains">Rs. 0.00</span>
                         </div>
-                        
+
                         <!-- Compact Metrics inside Summary -->
                         <div class="mini-metrics-row">
                             <div class="mini-metric">
@@ -92,7 +97,8 @@
                     </div>
 
                     <!-- 2. Actions Cell -->
-                    <div class="bento-cell area-actions flex-center-col" onclick="app.switchTab('add')" style="cursor: pointer; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">
+                    <div class="bento-cell area-actions flex-center-col" onclick="app.switchTab('add')"
+                        style="cursor: pointer; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.1);">
                         <div class="action-icon-circle">
                             <i data-lucide="plus" style="width: 32px; height: 32px; color: #10B981;"></i>
                         </div>
@@ -122,8 +128,8 @@
                         </div>
                     </div>
 
-                     <!-- 4. Quick Stats / Holdings Preview -->
-                     <div class="bento-cell area-settings">
+                    <!-- 4. Quick Stats / Holdings Preview -->
+                    <div class="bento-cell area-settings">
                         <div class="cell-header">
                             <h3>Analytics</h3>
                         </div>
@@ -136,12 +142,12 @@
                                 <span>Tax Rate</span>
                                 <span class="font-mono">15%</span>
                             </div>
-                             <div class="stat-row">
+                            <div class="stat-row">
                                 <span>Status</span>
                                 <span class="status-active">Active</span>
                             </div>
                         </div>
-                     </div>
+                    </div>
 
                 </div>
             </div>
@@ -163,11 +169,13 @@
                     <form id="transactionForm" class="form-modern">
                         <!-- Transaction Type Toggle -->
                         <div class="transaction-type-toggle">
-                            <button type="button" class="type-btn active" data-type="BUY" onclick="selectTransactionType('BUY')">
+                            <button type="button" class="type-btn active" data-type="BUY"
+                                onclick="selectTransactionType('BUY')">
                                 <i data-lucide="trending-up" class="lucide-sm"></i>
                                 Buy
                             </button>
-                            <button type="button" class="type-btn" data-type="SELL" onclick="selectTransactionType('SELL')">
+                            <button type="button" class="type-btn" data-type="SELL"
+                                onclick="selectTransactionType('SELL')">
                                 <i data-lucide="trending-down" class="lucide-sm"></i>
                                 Sell
                             </button>
@@ -225,7 +233,8 @@
                             <h3 class="card-title-modern">Current Holdings</h3>
                             <p class="card-subtitle">Your portfolio at a glance</p>
                         </div>
-                        <button class="btn-modern btn-modern-secondary" onclick="app.refreshHoldings()" style="padding: 10px 16px; font-size: 0.85rem;">
+                        <button class="btn-modern btn-modern-secondary" onclick="app.refreshHoldings()"
+                            style="padding: 10px 16px; font-size: 0.85rem;">
                             <i data-lucide="refresh-cw" class="lucide-sm"></i> Refresh
                         </button>
                     </div>
@@ -284,10 +293,12 @@
                     </div>
                     <!-- Export Actions -->
                     <div class="tax-export-actions" id="taxExportActions" style="display: none;">
-                        <button class="btn-modern" onclick="app.exportToPDF()" style="font-size: 0.85rem; padding: 12px 18px;">
+                        <button class="btn-modern" onclick="app.exportToPDF()"
+                            style="font-size: 0.85rem; padding: 12px 18px;">
                             <i data-lucide="file-down" class="lucide-sm"></i> Export PDF
                         </button>
-                        <button class="btn-modern btn-modern-secondary" onclick="app.exportToJSON()" style="font-size: 0.85rem; padding: 12px 18px;">
+                        <button class="btn-modern btn-modern-secondary" onclick="app.exportToJSON()"
+                            style="font-size: 0.85rem; padding: 12px 18px;">
                             <i data-lucide="download" class="lucide-sm"></i> Export JSON
                         </button>
                     </div>
@@ -327,7 +338,8 @@
                         <i data-lucide="info" class="info-box-icon"></i>
                         <div class="info-box-content">
                             <strong>What is Filer Status?</strong><br>
-                            Filer: You file income tax returns. Currently both filers and non-filers pay 15% flat rate on securities acquired after July 1, 2024.
+                            Filer: You file income tax returns. Currently both filers and non-filers pay 15% flat rate
+                            on securities acquired after July 1, 2024.
                         </div>
                     </div>
                 </section>
@@ -378,99 +390,105 @@
                     <div id="whatifResults" class="whatif-results"></div>
                 </section>
 
-            <!-- Corporate Actions -->
-            <section class="glass-card animate-fade-in-up delay-2">
-                <div class="card-header-modern">
-                    <div class="card-icon primary">
-                        <i data-lucide="git-branch" class="lucide-lg"></i>
-                    </div>
-                    <h3 class="card-title-modern">Corporate Actions</h3>
-                </div>
-                <p style="color: #64748b; margin-bottom: 20px; font-size: 1rem; line-height: 1.5;">
-                    When companies announce <strong>bonus shares</strong> or <strong>right issues</strong>, use this tool to automatically adjust your holdings and cost basis.
-                </p>
-
-                <!-- Educational Info Boxes -->
-                <div class="info-cards-grid">
-                    <!-- Bonus Shares Explanation -->
-                    <div class="info-card info-card-success">
-                        <div class="info-card-icon">
-                            <i data-lucide="gift" style="width: 24px; height: 24px; color: var(--success-green);"></i>
+                <!-- Corporate Actions -->
+                <section class="glass-card animate-fade-in-up delay-2">
+                    <div class="card-header-modern">
+                        <div class="card-icon primary">
+                            <i data-lucide="git-branch" class="lucide-lg"></i>
                         </div>
-                        <div class="info-card-content">
-                            <h4 class="info-card-title">Bonus Shares</h4>
-                            <p class="info-card-text">Company gives you <strong>free additional shares</strong> based on how many you own.</p>
-                            <div class="info-card-example">
-                                <strong>Example:</strong> You own 100 shares. Company announces 20% bonus.<br>
-                                → You receive 20 free shares (total: 120)
+                        <h3 class="card-title-modern">Corporate Actions</h3>
+                    </div>
+                    <p style="color: #64748b; margin-bottom: 20px; font-size: 1rem; line-height: 1.5;">
+                        When companies announce <strong>bonus shares</strong> or <strong>right issues</strong>, use this
+                        tool to automatically adjust your holdings and cost basis.
+                    </p>
+
+                    <!-- Educational Info Boxes -->
+                    <div class="info-cards-grid">
+                        <!-- Bonus Shares Explanation -->
+                        <div class="info-card info-card-success">
+                            <div class="info-card-icon">
+                                <i data-lucide="gift"
+                                    style="width: 24px; height: 24px; color: var(--success-green);"></i>
+                            </div>
+                            <div class="info-card-content">
+                                <h4 class="info-card-title">Bonus Shares</h4>
+                                <p class="info-card-text">Company gives you <strong>free additional shares</strong>
+                                    based on how many you own.</p>
+                                <div class="info-card-example">
+                                    <strong>Example:</strong> You own 100 shares. Company announces 20% bonus.<br>
+                                    → You receive 20 free shares (total: 120)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Issue Explanation -->
+                        <div class="info-card info-card-blue">
+                            <div class="info-card-icon">
+                                <i data-lucide="coins" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                            </div>
+                            <div class="info-card-content">
+                                <h4 class="info-card-title" style="color: #3b82f6;">Right Issue</h4>
+                                <p class="info-card-text">Company offers you <strong>additional shares at a
+                                        discount</strong> (you must pay).</p>
+                                <div class="info-card-example">
+                                    <strong>Example:</strong> You own 100 shares. Company offers 1:5 right @ Rs. 80.<br>
+                                    → Buy 20 more at Rs. 80 each
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Issue Explanation -->
-                    <div class="info-card info-card-blue">
-                        <div class="info-card-icon">
-                            <i data-lucide="coins" style="width: 24px; height: 24px; color: #3b82f6;"></i>
-                        </div>
-                        <div class="info-card-content">
-                            <h4 class="info-card-title" style="color: #3b82f6;">Right Issue</h4>
-                            <p class="info-card-text">Company offers you <strong>additional shares at a discount</strong> (you must pay).</p>
-                            <div class="info-card-example">
-                                <strong>Example:</strong> You own 100 shares. Company offers 1:5 right @ Rs. 80.<br>
-                                → Buy 20 more at Rs. 80 each
+                    <form id="corporateActionForm" class="ca-form-modern"
+                        onsubmit="event.preventDefault(); handleCorporateActionSubmit();">
+                        <div class="ca-form-grid">
+                            <div class="input-float">
+                                <select id="caType" required onchange="toggleRightIssueFields()">
+                                    <option value="BONUS">Bonus Shares (Free)</option>
+                                    <option value="RIGHT">Right Issue (Buy at discount)</option>
+                                </select>
+                                <label for="caType">Action Type</label>
+                            </div>
+                            <div class="input-float">
+                                <input type="text" id="caSymbol" placeholder=" " required autocomplete="off">
+                                <label for="caSymbol">Stock Symbol</label>
+                                <span class="input-hint">e.g., HBL</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="text" id="caRatio" placeholder=" " required>
+                                <label for="caRatio">Ratio/Percentage</label>
+                                <span class="input-hint">20% or 1:5</span>
+                            </div>
+                            <div class="input-float" id="caPriceGroup" style="display: none;">
+                                <input type="number" id="caPrice" placeholder=" " step="0.01" min="0">
+                                <label for="caPrice">Right Price</label>
+                                <span class="input-hint">PKR per share</span>
+                            </div>
+                            <div class="input-float">
+                                <input type="date" id="caExDate" placeholder=" " required>
+                                <label for="caExDate">Ex-Date</label>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <form id="corporateActionForm" class="ca-form-modern" onsubmit="event.preventDefault(); handleCorporateActionSubmit();">
-                    <div class="ca-form-grid">
-                        <div class="input-float">
-                            <select id="caType" required onchange="toggleRightIssueFields()">
-                                <option value="BONUS">Bonus Shares (Free)</option>
-                                <option value="RIGHT">Right Issue (Buy at discount)</option>
-                            </select>
-                            <label for="caType">Action Type</label>
+                        <!-- Ex-Date Help Box -->
+                        <div class="info-box-modern">
+                            <i data-lucide="info" class="info-box-icon"></i>
+                            <div class="info-box-content">
+                                <strong>What is Ex-Date?</strong><br>
+                                The date you must own shares by to receive this benefit. If you buy shares
+                                <strong>after</strong> the ex-date, you won't get the bonus/rights.
+                            </div>
                         </div>
-                        <div class="input-float">
-                            <input type="text" id="caSymbol" placeholder=" " required autocomplete="off">
-                            <label for="caSymbol">Stock Symbol</label>
-                            <span class="input-hint">e.g., HBL</span>
-                        </div>
-                        <div class="input-float">
-                            <input type="text" id="caRatio" placeholder=" " required>
-                            <label for="caRatio">Ratio/Percentage</label>
-                            <span class="input-hint">20% or 1:5</span>
-                        </div>
-                        <div class="input-float" id="caPriceGroup" style="display: none;">
-                            <input type="number" id="caPrice" placeholder=" " step="0.01" min="0">
-                            <label for="caPrice">Right Price</label>
-                            <span class="input-hint">PKR per share</span>
-                        </div>
-                        <div class="input-float">
-                            <input type="date" id="caExDate" placeholder=" " required>
-                            <label for="caExDate">Ex-Date</label>
-                        </div>
-                    </div>
 
-                    <!-- Ex-Date Help Box -->
-                    <div class="info-box-modern">
-                        <i data-lucide="info" class="info-box-icon"></i>
-                        <div class="info-box-content">
-                            <strong>What is Ex-Date?</strong><br>
-                            The date you must own shares by to receive this benefit. If you buy shares <strong>after</strong> the ex-date, you won't get the bonus/rights.
-                        </div>
-                    </div>
+                        <button type="submit" class="btn-modern btn-submit">
+                            <i data-lucide="check-circle" class="lucide-sm"></i>
+                            Apply Corporate Action
+                        </button>
+                    </form>
+                    <div id="corporateActionsHistory"></div>
+                </section>
 
-                    <button type="submit" class="btn-modern btn-submit">
-                        <i data-lucide="check-circle" class="lucide-sm"></i>
-                        Apply Corporate Action
-                    </button>
-                </form>
-                <div id="corporateActionsHistory"></div>
-            </section>
-
-            <!-- Data Management -->
+                <!-- Data Management -->
                 <section class="glass-card animate-fade-in-up delay-3">
                     <div class="card-header-modern">
                         <div class="card-icon">
@@ -480,52 +498,68 @@
                     </div>
 
                     <!-- Data Statistics -->
-                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                    <div
+                        style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                            <i data-lucide="pie-chart" style="color: var(--success-green); width: 20px; height: 20px;"></i>
-                            <h4 style="margin: 0; color: var(--success-green); font-size: 1rem; font-weight: 600;">Your Portfolio Data</h4>
+                            <i data-lucide="pie-chart"
+                                style="color: var(--success-green); width: 20px; height: 20px;"></i>
+                            <h4 style="margin: 0; color: var(--success-green); font-size: 1rem; font-weight: 600;">Your
+                                Portfolio Data</h4>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
                             <div>
                                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Transactions</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatTransactions">0</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;"
+                                    id="dataStatTransactions">0</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Active Holdings</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatHoldings">0</div>
+                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Active Holdings
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatHoldings">
+                                    0</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Realized Sales</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatSales">0</div>
+                                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Realized Sales
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #01652f;" id="dataStatSales">0
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Export Actions -->
-                    <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                    <div
+                        style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
                         <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
-                            <i data-lucide="hard-drive-download" style="color: #3b82f6; width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <i data-lucide="hard-drive-download"
+                                style="color: #3b82f6; width: 24px; height: 24px; flex-shrink: 0;"></i>
                             <div>
                                 <h4 style="margin: 0 0 8px 0; color: #3b82f6; font-size: 1rem;">Backup Your Data</h4>
                                 <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
-                                    Export your portfolio to keep a backup. Use this before clearing data or switching devices.
+                                    Export your portfolio to keep a backup. Use this before clearing data or switching
+                                    devices.
                                 </p>
                             </div>
                         </div>
                         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <button class="btn-modern" onclick="app.exportToJSON()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <button class="btn-modern" onclick="app.exportToJSON()"
+                                style="font-size: 0.85rem; padding: 12px 18px;">
                                 <i data-lucide="download" class="lucide-sm"></i> Download JSON
                             </button>
-                            <button class="btn-modern btn-modern-secondary" onclick="app.exportToPDF()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <button class="btn-modern btn-modern-secondary" onclick="app.exportToPDF()"
+                                style="font-size: 0.85rem; padding: 12px 18px;">
                                 <i data-lucide="file-text" class="lucide-sm"></i> Download PDF
                             </button>
                         </div>
                     </div>
 
                     <!-- Import Actions -->
-                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                    <div
+                        style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
                         <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
-                            <i data-lucide="hard-drive-upload" style="color: #10b981; width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <i data-lucide="hard-drive-upload"
+                                style="color: #10b981; width: 24px; height: 24px; flex-shrink: 0;"></i>
                             <div>
                                 <h4 style="margin: 0 0 8px 0; color: #10b981; font-size: 1rem;">Import Data</h4>
                                 <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
@@ -534,24 +568,34 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importFromFile(event)">
-                            <button class="btn-modern btn-modern-secondary" onclick="document.getElementById('importFile').click()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <input type="file" id="importFile" accept=".json" style="display:none"
+                                onchange="app.importFromFile(event)">
+                            <button class="btn-modern btn-modern-secondary"
+                                onclick="document.getElementById('importFile').click()"
+                                style="font-size: 0.85rem; padding: 12px 18px;">
                                 <i data-lucide="folder-open" class="lucide-sm"></i> Import JSON
                             </button>
-                            <input type="file" id="importCSV" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
-                            <button class="btn-modern btn-modern-secondary" onclick="document.getElementById('importCSV').click()" style="font-size: 0.85rem; padding: 12px 18px;">
+                            <input type="file" id="importCSV" accept=".csv" style="display:none"
+                                onchange="app.importFromCSV(event)">
+                            <button class="btn-modern btn-modern-secondary"
+                                onclick="document.getElementById('importCSV').click()"
+                                style="font-size: 0.85rem; padding: 12px 18px;">
                                 <i data-lucide="table" class="lucide-sm"></i> Import CSV
                             </button>
                         </div>
-                        <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 0.85rem; color: #475569;">
-                            <strong>CSV Format:</strong> Your broker's CSV should have columns: Date, Type (BUY/SELL), Symbol, Quantity, Price
+                        <div
+                            style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 0.85rem; color: #475569;">
+                            <strong>CSV Format:</strong> Your broker's CSV should have columns: Date, Type (BUY/SELL),
+                            Symbol, Quantity, Price
                         </div>
                     </div>
 
                     <!-- Storage Info -->
-                    <div style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                    <div
+                        style="background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.06);">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i data-lucide="hard-drive" style="color: var(--text-muted); width: 20px; height: 20px;"></i>
+                            <i data-lucide="hard-drive"
+                                style="color: var(--text-muted); width: 20px; height: 20px;"></i>
                             <div id="storageInfo" class="storage-info" style="flex: 1;"></div>
                         </div>
                     </div>
@@ -559,15 +603,19 @@
                     <!-- Destructive Actions -->
                     <div class="glass-card-danger" style="padding: 20px; border-radius: 16px;">
                         <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
-                            <i data-lucide="alert-triangle" style="color: var(--danger-red); width: 24px; height: 24px; flex-shrink: 0;"></i>
+                            <i data-lucide="alert-triangle"
+                                style="color: var(--danger-red); width: 24px; height: 24px; flex-shrink: 0;"></i>
                             <div>
-                                <h4 style="margin: 0 0 8px 0; color: var(--danger-red); font-size: 1rem;">Danger Zone</h4>
+                                <h4 style="margin: 0 0 8px 0; color: var(--danger-red); font-size: 1rem;">Danger Zone
+                                </h4>
                                 <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
-                                    <strong style="color: var(--danger-red);">Warning:</strong> These actions are permanent and cannot be undone.
+                                    <strong style="color: var(--danger-red);">Warning:</strong> These actions are
+                                    permanent and cannot be undone.
                                 </p>
                             </div>
                         </div>
-                        <button class="btn-modern" onclick="app.clearAllData()" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 12px 18px;">
+                        <button class="btn-modern" onclick="app.clearAllData()"
+                            style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 12px 18px;">
                             <i data-lucide="trash-2" class="lucide-sm"></i> Clear All Data
                         </button>
                     </div>
@@ -587,8 +635,10 @@
                 </div>
             </div>
             <div class="pwa-install-actions">
-                <button class="btn-modern btn-modern-sm btn-pwa-dismiss" onclick="app.dismissInstallPrompt()">Not Now</button>
-                <button class="btn-modern btn-modern-sm btn-pwa-install" onclick="app.executeInstallPrompt()">Install</button>
+                <button class="btn-modern btn-modern-sm btn-pwa-dismiss" onclick="app.dismissInstallPrompt()">Not
+                    Now</button>
+                <button class="btn-modern btn-modern-sm btn-pwa-install"
+                    onclick="app.executeInstallPrompt()">Install</button>
             </div>
         </div>
 
@@ -659,8 +709,10 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2025 Pakistan Stock Tax Calculator | FIFO Method | Pakistan CGT Rules (15% flat rate for securities acquired after July 1, 2024)</p>
-            <p class="disclaimer">This tool is for informational purposes only. Consult a tax professional for official tax advice.</p>
+            <p>&copy; 2025 Pakistan Stock Tax Calculator | FIFO Method | Pakistan CGT Rules (15% flat rate for
+                securities acquired after July 1, 2024)</p>
+            <p class="disclaimer">This tool is for informational purposes only. Consult a tax professional for official
+                tax advice.</p>
         </footer>
     </div>
 
@@ -721,11 +773,13 @@
             </div>
             <div class="confirm-input-wrapper" id="confirmInputWrapper" style="display: none;">
                 <label class="confirm-input-label" id="confirmInputLabel">Type "DELETE" to confirm:</label>
-                <input type="text" id="confirmInput" class="confirm-input" placeholder="Type here..." autocomplete="off">
+                <input type="text" id="confirmInput" class="confirm-input" placeholder="Type here..."
+                    autocomplete="off">
             </div>
             <div class="modal-actions" id="confirmActions">
                 <button class="btn btn-secondary" onclick="app.hideConfirmModal()">Cancel</button>
-                <button class="btn btn-danger" id="confirmActionBtn" onclick="app.executeConfirmAction()">Confirm</button>
+                <button class="btn btn-danger" id="confirmActionBtn"
+                    onclick="app.executeConfirmAction()">Confirm</button>
             </div>
         </div>
     </div>
@@ -817,4 +871,5 @@
         });
     </script>
 </body>
+
 </html>
