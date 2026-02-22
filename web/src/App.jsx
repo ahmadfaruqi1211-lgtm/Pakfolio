@@ -48,7 +48,7 @@ function useAppEngine() {
       try {
         const data = await storageManager.loadData()
         if (data) fifoQueue.importData(data)
-      } catch (e) {}
+      } catch (e) { }
 
       const settings = storageManager.loadSettings()
       if (settings && typeof settings.filerStatus === 'boolean') {
@@ -69,7 +69,7 @@ function useAppEngine() {
 
   const persist = React.useCallback(() => {
     if (!engine.ready) return
-    Promise.resolve(engine.storageManager.saveData(engine.fifoQueue.exportData())).catch(() => {})
+    Promise.resolve(engine.storageManager.saveData(engine.fifoQueue.exportData())).catch(() => { })
   }, [engine])
 
   const persistSettings = React.useCallback(
@@ -131,7 +131,7 @@ function SkeletonBlock({ className }) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-5">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
             <SkeletonBlock className="h-3 w-40 rounded-lg" />
@@ -143,7 +143,7 @@ function DashboardSkeleton() {
 
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-slate-950/30 border border-slate-800 p-4">
+            <div key={i} className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
               <SkeletonBlock className="h-3 w-24 rounded-lg" />
               <SkeletonBlock className="mt-3 h-6 w-28 rounded-lg" />
               <SkeletonBlock className="mt-2 h-3 w-20 rounded-lg" />
@@ -152,7 +152,7 @@ function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <SkeletonBlock className="h-4 w-28 rounded-lg" />
         <SkeletonBlock className="mt-2 h-3 w-64 rounded-lg" />
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -169,17 +169,17 @@ function PortfolioSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+        <div key={i} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <SkeletonBlock className="h-5 w-20 rounded-lg" />
             <SkeletonBlock className="h-4 w-24 rounded-lg" />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
               <SkeletonBlock className="h-3 w-16 rounded-lg" />
               <SkeletonBlock className="mt-2 h-5 w-24 rounded-lg" />
             </div>
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
               <SkeletonBlock className="h-3 w-20 rounded-lg" />
               <SkeletonBlock className="mt-2 h-5 w-28 rounded-lg" />
             </div>
@@ -194,7 +194,7 @@ function HistorySkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+        <div key={i} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <SkeletonBlock className="h-5 w-24 rounded-lg" />
             <SkeletonBlock className="h-5 w-14 rounded-lg" />
@@ -216,7 +216,7 @@ function TabButton({ active, children, onClick }) {
       onClick={onClick}
       className={
         'py-2 rounded-xl transition-all active:scale-[0.98] ' +
-        (active ? 'bg-slate-900 text-slate-50' : 'text-slate-300 hover:bg-slate-900')
+        (active ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-200')
       }
     >
       {children}
@@ -242,9 +242,9 @@ function PrimaryTabButton({ active, children, onClick }) {
 
 function Card({ title, subtitle, children }) {
   return (
-    <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+    <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
       <div>
-        <div className="text-sm text-slate-300">{title}</div>
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
         {subtitle ? <div className="text-xs text-slate-500 mt-0.5">{subtitle}</div> : null}
       </div>
       <div className="mt-3">{children}</div>
@@ -266,47 +266,47 @@ function UpgradeModal({ onClose }) {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm px-4 pb-6">
-      <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 flex flex-col max-h-[88vh]">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm px-4 pb-6">
+      <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 flex flex-col max-h-[88vh] shadow-2xl">
         {/* Sticky header */}
-        <div className="flex items-start justify-between p-5 border-b border-slate-800 flex-shrink-0">
+        <div className="flex items-start justify-between p-5 border-b border-slate-100 flex-shrink-0">
           <div>
-            <div className="text-base font-bold text-slate-100">Unlock Pro Features</div>
-            <div className="text-emerald-400 font-semibold text-sm mt-0.5">{PRO_PRICE}</div>
+            <div className="text-base font-bold text-slate-900">Unlock Pro Features</div>
+            <div className="text-emerald-600 font-semibold text-sm mt-0.5">{PRO_PRICE}</div>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xl leading-none pl-3">✕</button>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none pl-3">✕</button>
         </div>
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 p-5 space-y-5">
           {/* Pro features */}
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">What You Get</div>
-            <ul className="space-y-1.5 text-sm text-slate-300">
-              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Unlimited Tax Report exports</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Unlimited What-If scenarios</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Corporate Actions (Bonus / Right Issues)</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Bulk CSV Upload / Import</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-400 font-bold">✓</span> Priority WhatsApp support</li>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">What You Get</div>
+            <ul className="space-y-1.5 text-sm text-slate-600">
+              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Unlimited Tax Report exports</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Unlimited What-If scenarios</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Corporate Actions (Bonus / Right Issues)</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Bulk CSV Upload / Import</li>
+              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Priority WhatsApp support</li>
             </ul>
           </div>
 
           {/* Payment methods */}
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Payment Methods</div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Methods</div>
             <div className="space-y-2">
-              <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3.5">
-                <div className="text-[11px] font-bold text-emerald-400 mb-1.5">JazzCash / EasyPaisa</div>
-                <div className="font-mono text-base text-slate-100 font-bold tracking-wide">{JAZZCASH_NUMBER}</div>
-                <div className="text-xs text-slate-400 mt-0.5">Send {PRO_PRICE}</div>
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
+                <div className="text-[11px] font-bold text-emerald-600 mb-1.5">JazzCash / EasyPaisa</div>
+                <div className="font-mono text-base text-slate-900 font-bold tracking-wide">{JAZZCASH_NUMBER}</div>
+                <div className="text-xs text-slate-500 mt-0.5">Send {PRO_PRICE}</div>
               </div>
-              <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3.5">
-                <div className="text-[11px] font-bold text-emerald-400 mb-1.5">Bank Transfer (NIFT / IBFT)</div>
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
+                <div className="text-[11px] font-bold text-emerald-600 mb-1.5">Bank Transfer (NIFT / IBFT)</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                   <span className="text-slate-500">Name</span>
-                  <span className="text-slate-100 font-semibold">{BANK_NAME}</span>
+                  <span className="text-slate-900 font-semibold">{BANK_NAME}</span>
                   <span className="text-slate-500">IBAN</span>
-                  <span className="font-mono text-slate-100 font-semibold break-all">{BANK_IBAN}</span>
+                  <span className="font-mono text-slate-900 font-semibold break-all">{BANK_IBAN}</span>
                 </div>
               </div>
             </div>
@@ -323,8 +323,8 @@ function UpgradeModal({ onClose }) {
                 'Receive your license key (PF-2026-XXXX) — usually within a few hours',
                 'Go to Settings → License and enter the key to activate Pro',
               ].map((step, i) => (
-                <li key={i} className="flex gap-2.5 text-sm text-slate-300">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                <li key={i} className="flex gap-2.5 text-sm text-slate-600">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold flex items-center justify-center mt-0.5">
                     {i + 1}
                   </span>
                   <span>{step}</span>
@@ -434,19 +434,19 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
     <div className="space-y-4">
       <Card title="Tax Summary" subtitle={engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}>
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="text-xs text-slate-500">Sales</div>
-            <div className="text-slate-100 font-semibold">{totalSales}</div>
+            <div className="text-slate-900 font-semibold">{totalSales}</div>
           </div>
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="text-xs text-slate-500">Total Gain</div>
-            <div className={totalGain >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+            <div className={totalGain >= 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}>
               {formatPKR(totalGain)}
             </div>
           </div>
-          <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="text-xs text-slate-500">Tax Payable</div>
-            <div className="text-rose-300 font-semibold">{formatPKR(totalTax)}</div>
+            <div className="text-rose-600 font-semibold">{formatPKR(totalTax)}</div>
           </div>
         </div>
 
@@ -460,22 +460,20 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
           <button
             type="button"
             onClick={handleExportPdf}
-            className={`rounded-xl border py-2 text-sm font-semibold ${
-              !isPremium && taxUsed >= taxLimit
-                ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-                : 'bg-slate-950/40 border-slate-800 text-slate-100'
-            }`}
+            className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && taxUsed >= taxLimit
+              ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+              : 'bg-slate-950/40 border-slate-800 text-slate-100'
+              }`}
           >
             {!isPremium && taxUsed >= taxLimit ? '🔒 Export PDF' : 'Export PDF'}
           </button>
           <button
             type="button"
             onClick={handleExportJson}
-            className={`rounded-xl border py-2 text-sm font-semibold ${
-              !isPremium && taxUsed >= taxLimit
-                ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-                : 'bg-slate-950/40 border-slate-800 text-slate-100'
-            }`}
+            className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && taxUsed >= taxLimit
+              ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
+              : 'bg-slate-950/40 border-slate-800 text-slate-100'
+              }`}
           >
             {!isPremium && taxUsed >= taxLimit ? '🔒 Export JSON' : 'Export JSON'}
           </button>
@@ -504,10 +502,10 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
                 const tax = engine.taxCalculator.calculateTaxForSale(sale)
                 const soldQty = Number(sale.quantitySold || 0)
                 return (
-                  <div key={idx} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
+                  <div key={idx} className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm">
                     <div className="flex items-center justify-between">
-                      <div className="font-semibold text-slate-100">{sale.symbol}</div>
-                      <div className="text-slate-300">{formatNumber(soldQty)} shares</div>
+                      <div className="font-semibold text-slate-900">{sale.symbol}</div>
+                      <div className="text-slate-600">{formatNumber(soldQty)} shares</div>
                     </div>
                     <div className="mt-1 text-xs text-slate-500">Date: {String(sale.saleDate || '').slice(0, 10)}</div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
@@ -516,8 +514,8 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
                         <div
                           className={
                             Number(sale.capitalGain || 0) >= 0
-                              ? 'text-emerald-400 font-semibold'
-                              : 'text-rose-400 font-semibold'
+                              ? 'text-emerald-600 font-semibold'
+                              : 'text-rose-600 font-semibold'
                           }
                         >
                           {formatPKR(sale.capitalGain || 0)}
@@ -525,11 +523,11 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
                       </div>
                       <div>
                         <div className="text-slate-500">Tax</div>
-                        <div className="text-slate-100 font-semibold">{formatPKR(tax.totalTax || 0)}</div>
+                        <div className="text-slate-900 font-semibold">{formatPKR(tax.totalTax || 0)}</div>
                       </div>
                       <div>
                         <div className="text-slate-500">Net</div>
-                        <div className="text-slate-100 font-semibold">{formatPKR(tax.netProfit || 0)}</div>
+                        <div className="text-slate-900 font-semibold">{formatPKR(tax.netProfit || 0)}</div>
                       </div>
                     </div>
                   </div>
@@ -573,10 +571,10 @@ function TransactionHistoryScreen({ engine }) {
           </Card>
         ) : (
           filtered.map((t, idx) => (
-            <div key={idx} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+            <div key={idx} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="font-bold tracking-tight">{String(t.symbol || '').toUpperCase()}</div>
-                <div className={t.type === 'SELL' ? 'text-rose-300 font-semibold' : 'text-emerald-300 font-semibold'}>
+                <div className="font-bold tracking-tight text-slate-900">{String(t.symbol || '').toUpperCase()}</div>
+                <div className={t.type === 'SELL' ? 'text-rose-600 font-semibold' : 'text-emerald-600 font-semibold'}>
                   {t.type}
                 </div>
               </div>
@@ -806,14 +804,14 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
           <button
             type="button"
             onClick={() => setTabAndUrl('tax')}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
           >
             Tax Report
           </button>
           <button
             type="button"
             onClick={() => setTabAndUrl('history')}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
           >
             History
           </button>
@@ -825,18 +823,17 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
           <button
             type="button"
             onClick={() => (isPremium ? setTabAndUrl('corporate') : showUpgrade())}
-            className={`rounded-xl border py-2 text-sm font-semibold ${
-              isPremium
-                ? 'bg-slate-950/40 border-slate-800 text-slate-100'
-                : 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-            }`}
+            className={`rounded-xl border py-2 text-sm font-semibold ${isPremium
+              ? 'bg-slate-50 border-slate-200 text-slate-900'
+              : 'bg-slate-50/50 border-slate-100 text-slate-400'
+              }`}
           >
             {isPremium ? 'Corporate Actions' : '🔒 Corp. Actions'}
           </button>
           <button
             type="button"
             onClick={() => setTabAndUrl('whatif')}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
           >
             What-If
           </button>
@@ -850,11 +847,10 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
         <button
           type="button"
           onClick={() => (isPremium ? alert('Bulk CSV Upload — coming soon!') : showUpgrade())}
-          className={`w-full rounded-xl border py-2 text-sm font-semibold ${
-            isPremium
-              ? 'bg-slate-950/40 border-slate-800 text-slate-100'
-              : 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-          }`}
+          className={`w-full rounded-xl border py-2 text-sm font-semibold ${isPremium
+            ? 'bg-slate-50 border-slate-200 text-slate-900'
+            : 'bg-slate-50/50 border-slate-100 text-slate-400'
+            }`}
         >
           {isPremium ? 'Bulk CSV Upload' : '🔒 Bulk CSV Upload — Pro Only'}
         </button>
@@ -867,7 +863,7 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
         <button
           type="button"
           onClick={() => setTabAndUrl('settings')}
-          className="w-full rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+          className="w-full rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
         >
           Open Settings
         </button>
@@ -879,17 +875,17 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
 
 function StatTile({ label, value, subValue, tone = 'slate' }) {
   const toneMap = {
-    slate: 'text-slate-100',
-    emerald: 'text-emerald-300',
-    rose: 'text-rose-300',
-    amber: 'text-amber-300'
+    slate: 'text-slate-900',
+    emerald: 'text-emerald-700',
+    rose: 'text-rose-700',
+    amber: 'text-amber-700'
   }
 
   return (
-    <div className="rounded-2xl bg-slate-950/30 border border-slate-800 p-4 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+    <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
+      <div className="text-[11px] uppercase tracking-wide text-slate-500 font-bold">{label}</div>
       <div className={'mt-1 text-lg font-bold tracking-tight ' + (toneMap[tone] || toneMap.slate)}>{value}</div>
-      {subValue ? <div className="mt-1 text-xs text-slate-400">{subValue}</div> : null}
+      {subValue ? <div className="mt-1 text-xs text-slate-500">{subValue}</div> : null}
     </div>
   )
 }
@@ -931,17 +927,17 @@ function DashboardScreen({ engine, setTabAndUrl }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/70 via-slate-950/60 to-slate-900/50 p-5 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm overflow-hidden relative">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-xs text-slate-400">Tax payable (estimated)</div>
-            <div className="mt-1 text-3xl font-extrabold tracking-tight text-slate-50">{formatPKR(totalTax)}</div>
+            <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Tax payable (estimated)</div>
+            <div className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">{formatPKR(totalTax)}</div>
             <div
               className={
-                'mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ' +
+                'mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ' +
                 (engine.taxCalculator.isFiler
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                  : 'border-rose-500/30 bg-rose-500/10 text-rose-200')
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-rose-200 bg-rose-50 text-rose-700')
               }
             >
               {filerLabel}
@@ -972,16 +968,16 @@ function DashboardScreen({ engine, setTabAndUrl }) {
 
       {hasT1Context ? (
         <Card title="Settlement Update (T+1)" subtitle="Effective Feb 9, 2026">
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-slate-500">
             PSX has transitioned to T+1 settlement. Your gains and holding periods are now calculated on a 24-hour cycle.
           </div>
         </Card>
       ) : null}
 
       {!hasHoldings ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="text-sm font-semibold text-slate-100">Get started</div>
-          <div className="mt-1 text-sm text-slate-400">Add a BUY transaction to create your first holding.</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-sm font-bold text-slate-900 uppercase tracking-wide">Get started</div>
+          <div className="mt-1 text-sm text-slate-500">Add a BUY transaction to create your first holding.</div>
 
           <div className="mt-3">
             <button
@@ -993,42 +989,42 @@ function DashboardScreen({ engine, setTabAndUrl }) {
             </button>
           </div>
 
-          <div className="mt-3 rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-xs text-slate-300 space-y-1">
-            <div className="text-slate-100 font-semibold">Quick definitions</div>
-            <div><span className="font-semibold text-slate-100">FIFO</span>: Oldest shares are treated as sold first.</div>
-            <div><span className="font-semibold text-slate-100">T+1</span>: PSX settlement is typically trade date + 1 business day.</div>
-            <div><span className="font-semibold text-slate-100">Capital gain</span>: Net sale proceeds − cost basis (after fees).</div>
+          <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-600 space-y-1">
+            <div className="text-slate-900 font-bold uppercase tracking-wider text-[10px]">Quick definitions</div>
+            <div><span className="font-semibold text-slate-900">FIFO</span>: Oldest shares are treated as sold first.</div>
+            <div><span className="font-semibold text-slate-900">T+1</span>: PSX settlement is typically trade date + 1 business day.</div>
+            <div><span className="font-semibold text-slate-900">Capital gain</span>: Net sale proceeds − cost basis (after fees).</div>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="text-sm font-semibold text-slate-100">Quick actions</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-sm font-bold text-slate-900 uppercase tracking-wide px-1">Quick actions</div>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => setTabAndUrl('add')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Add
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('history')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
               History
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('corporate')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Actions
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('settings')}
-              className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
+              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Settings
             </button>
@@ -1039,108 +1035,26 @@ function DashboardScreen({ engine, setTabAndUrl }) {
   )
 }
 
-function PortfolioScreen({ engine, onRefresh }) {
-  const [pull, setPull] = React.useState(0)
-  const [refreshing, setRefreshing] = React.useState(false)
-  const startYRef = React.useRef(null)
-  const pullingRef = React.useRef(false)
-  const pullRef = React.useRef(0)
-  const refreshingRef = React.useRef(false)
-
-  const setPullSafe = React.useCallback((v) => {
-    pullRef.current = v
-    setPull(v)
-  }, [])
-
-  const setRefreshingSafe = React.useCallback((v) => {
-    refreshingRef.current = v
-    setRefreshing(v)
-  }, [])
-
-  React.useEffect(() => {
-    const onTouchStart = (e) => {
-      if (refreshingRef.current) return
-      if (window.scrollY !== 0) return
-      const y = e.touches?.[0]?.clientY
-      if (!y) return
-      startYRef.current = y
-      pullingRef.current = true
-    }
-
-    const onTouchMove = (e) => {
-      if (!pullingRef.current) return
-      const y = e.touches?.[0]?.clientY
-      if (!y || startYRef.current == null) return
-      const dy = y - startYRef.current
-      if (dy <= 0) return
-      setPullSafe(Math.min(dy, 90))
-    }
-
-    const onTouchEnd = () => {
-      if (!pullingRef.current) return
-      pullingRef.current = false
-      startYRef.current = null
-
-      const v = pullRef.current
-      if (v >= 70 && typeof onRefresh === 'function') {
-        setRefreshingSafe(true)
-        setPullSafe(70)
-        try {
-          onRefresh()
-        } catch {}
-        window.setTimeout(() => {
-          setRefreshingSafe(false)
-          setPullSafe(0)
-        }, 700)
-        return
-      }
-
-      setPullSafe(0)
-    }
-
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchmove', onTouchMove, { passive: true })
-    window.addEventListener('touchend', onTouchEnd)
-    return () => {
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove', onTouchMove)
-      window.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [onRefresh, setPullSafe, setRefreshingSafe])
-
+function PortfolioScreen({ engine }) {
   const holdings = engine.fifoQueue.getHoldings()
   const symbols = Object.keys(holdings || {}).sort()
-
-  const progress = Math.min(pull, 70) / 70
-  const rotateDeg = Math.round(progress * 180)
 
   if (symbols.length === 0) {
     return (
       <Card title="Portfolio" subtitle="No holdings yet">
-        <div className="text-sm text-slate-400">Add a BUY transaction to begin.</div>
+        <div className="text-sm text-slate-500">Add a BUY transaction to begin.</div>
       </Card>
     )
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-center" style={{ height: pull ? Math.max(16, pull) : 0, transition: 'height 120ms ease-out' }}>
-        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/40 px-3 py-1 text-xs text-slate-300">
-          <div
-            className={
-              'h-4 w-4 rounded-full border-2 ' +
-              (refreshing
-                ? 'border-slate-600 border-t-emerald-400 '
-                : pull >= 70
-                  ? 'border-emerald-500/40 border-t-emerald-300 '
-                  : 'border-slate-600 border-t-slate-400 ') +
-              (refreshing ? 'animate-spin' : '')
-            }
-            style={refreshing ? undefined : { transform: `rotate(${rotateDeg}deg)`, transition: 'transform 40ms linear' }}
-          />
-          <span className={refreshing || pull >= 70 ? 'text-emerald-200' : undefined}>
-            {refreshing ? 'Refreshing…' : pull >= 70 ? 'Release to refresh' : 'Pull to refresh'}
-          </span>
+      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-2 flex items-center gap-3">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+        </div>
+        <div className="text-xs text-emerald-800 leading-snug">
+          Tip: <strong>Refresh the page</strong> in your browser to fetch the latest PSX market prices.
         </div>
       </div>
       {symbols.map((sym) => {
@@ -1150,19 +1064,19 @@ function PortfolioScreen({ engine, onRefresh }) {
         const avg = qty > 0 ? cost / qty : 0
 
         return (
-          <div key={sym} className="rounded-2xl bg-slate-900/60 border border-slate-800 p-4">
+          <div key={sym} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold tracking-tight">{sym}</div>
-              <div className="text-sm text-slate-300">{formatNumber(qty)} shares</div>
+              <div className="text-lg font-bold tracking-tight text-slate-900">{sym}</div>
+              <div className="text-sm font-semibold text-slate-600">{formatNumber(qty)} shares</div>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-                <div className="text-xs text-slate-500">Avg Cost</div>
-                <div className="text-slate-100 font-semibold">{formatPKR(avg)}</div>
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Avg Cost</div>
+                <div className="text-slate-900 font-bold">{formatPKR(avg)}</div>
               </div>
-              <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
-                <div className="text-xs text-slate-500">Total Cost</div>
-                <div className="text-slate-100 font-semibold">{formatPKR(cost)}</div>
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Cost</div>
+                <div className="text-slate-900 font-bold">{formatPKR(cost)}</div>
               </div>
             </div>
           </div>
@@ -1193,7 +1107,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
       const tax = engine.taxCalculator.calculateTaxForSale(sale)
       const gain = Number(sale.capitalGain || 0)
       const taxValue = Number(tax.totalTax || 0)
-      preview = { gain, tax: taxValue, net: gain - taxValue }
+      preview = { gain, tax, net: gain - taxValue }
     } catch {
       preview = null
     }
@@ -1215,7 +1129,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
           navigator.vibrate(15)
         }
-      } catch {}
+      } catch { }
       setQuantity('')
       setPrice('')
       setFeePercent('')
@@ -1236,8 +1150,8 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className={
                 'rounded-xl px-3 py-2 text-sm font-semibold border ' +
                 (type === 'BUY'
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-600')
               }
             >
               Buy
@@ -1248,8 +1162,8 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className={
                 'rounded-xl px-3 py-2 text-sm font-semibold border ' +
                 (type === 'SELL'
-                  ? 'bg-rose-500/15 border-rose-500/30 text-rose-300'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+                  ? 'bg-rose-50 border-rose-200 text-rose-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-600')
               }
             >
               Sell
@@ -1257,74 +1171,74 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
           </div>
 
           <div>
-            <label className="text-xs text-slate-400">Symbol</label>
+            <label className="text-xs text-slate-500">Symbol</label>
             <input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
               placeholder="e.g., OGDC"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-slate-400">Quantity</label>
+              <label className="text-xs text-slate-500">Quantity</label>
               <input
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
                 placeholder="100"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400">Price</label>
+              <label className="text-xs text-slate-500">Price</label>
               <input
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
                 placeholder="100.00"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400">Brokerage/Fees (%)</label>
+            <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 block">Brokerage/Fees (%)</label>
             <input
               value={feePercent}
               onChange={(e) => setFeePercent(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold"
               placeholder="0.5 (default)"
             />
-            <div className="mt-1 text-[11px] text-slate-500">Leave blank to use the default 0.5% incidental expense adjustment.</div>
+            <div className="mt-1 text-[11px] text-slate-400 font-medium italic">Leave blank to use the default 0.5% incidental expense adjustment.</div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400">Trade Date</label>
+            <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 block">Trade Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold"
             />
           </div>
 
           {preview ? (
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
-              <div className="text-xs text-slate-400">Tax Preview</div>
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm">
+              <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Tax Preview</div>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 <div>
-                  <div className="text-xs text-slate-500">Gain</div>
-                  <div className={preview.gain >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Gain</div>
+                  <div className={preview.gain >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
                     {formatPKR(preview.gain)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Tax</div>
-                  <div className="text-slate-100 font-semibold">{formatPKR(preview.tax)}</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tax</div>
+                  <div className="text-slate-900 font-bold">{formatPKR(preview.tax)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Net</div>
-                  <div className={preview.net >= 0 ? 'text-emerald-300 font-semibold' : 'text-rose-300 font-semibold'}>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Net</div>
+                  <div className={preview.net >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
                     {formatPKR(preview.net)}
                   </div>
                 </div>
@@ -1337,8 +1251,8 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className={
                 'rounded-xl px-3 py-2 text-sm border ' +
                 (message.kind === 'ok'
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300')
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-700')
               }
             >
               {message.text}
@@ -1372,7 +1286,7 @@ function SettingsScreen({ engine, persistSettings, onReset, profile, activate })
     const ok = window.confirm('Clear all saved data on this device?')
     if (!ok) return
     Promise.resolve(engine.storageManager.clearAllData())
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         window.location.reload()
       })
@@ -1392,8 +1306,8 @@ function SettingsScreen({ engine, persistSettings, onReset, profile, activate })
             className={
               'px-3 py-2 rounded-xl text-sm font-semibold border ' +
               (isFiler
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                : 'bg-slate-950/40 border-slate-800 text-slate-300')
+                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
+                : 'bg-slate-50 border-slate-200 text-slate-600')
             }
           >
             {isFiler ? 'On' : 'Off'}
@@ -1406,14 +1320,14 @@ function SettingsScreen({ engine, persistSettings, onReset, profile, activate })
           <button
             type="button"
             onClick={exportData}
-            className="rounded-xl bg-slate-950/40 border border-slate-800 py-2 text-sm font-semibold text-slate-100"
+            className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
           >
             Export
           </button>
           <button
             type="button"
             onClick={clearData}
-            className="rounded-xl bg-rose-500/10 border border-rose-500/30 py-2 text-sm font-semibold text-rose-300"
+            className="rounded-xl bg-rose-50 border border-rose-100 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-100/50 transition-colors"
           >
             Clear
           </button>
@@ -1493,48 +1407,48 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
       <Card title="What-If Scenarios" subtitle="Simulate trades without saving">
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-slate-400">Symbol</label>
+            <label className="text-xs text-slate-500">Symbol</label>
             <input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
               placeholder="e.g., OGDC"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-slate-400">Quantity</label>
+              <label className="text-xs text-slate-500">Quantity</label>
               <input
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
                 placeholder="100"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400">Price</label>
+              <label className="text-xs text-slate-500">Price</label>
               <input
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
                 placeholder="100.00"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400">Trade Date (for filer comparison)</label>
+            <label className="text-xs text-slate-500">Trade Date (for filer comparison)</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
             />
           </div>
 
           {error ? (
-            <div className="rounded-xl px-3 py-2 text-sm border bg-rose-500/10 border-rose-500/30 text-rose-300">
+            <div className="rounded-xl px-3 py-2 text-sm border bg-rose-500/10 border-rose-500/30 text-rose-700">
               {error}
             </div>
           ) : null}
@@ -1549,22 +1463,20 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
             <button
               type="button"
               onClick={() => handleRun('timing')}
-              className={`rounded-xl border py-2 text-sm font-semibold ${
-                !isPremium && whatIfUsed >= whatIfLimit
-                  ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-100'
-              }`}
+              className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && whatIfUsed >= whatIfLimit
+                ? 'bg-slate-50/50 border-slate-100 text-slate-400'
+                : 'bg-slate-50 border-slate-200 text-slate-900'
+                }`}
             >
               {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Timing' : 'Timing'}
             </button>
             <button
               type="button"
               onClick={() => handleRun('filer')}
-              className={`rounded-xl border py-2 text-sm font-semibold ${
-                !isPremium && whatIfUsed >= whatIfLimit
-                  ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-100'
-              }`}
+              className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && whatIfUsed >= whatIfLimit
+                ? 'bg-slate-50/50 border-slate-100 text-slate-400'
+                : 'bg-slate-50 border-slate-200 text-slate-900'
+                }`}
             >
               {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Filer Compare' : 'Filer Compare'}
             </button>
@@ -1576,10 +1488,10 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
         <Card title="Timing Analysis" subtitle={result.r?.recommendation || ''}>
           <div className="space-y-2 text-sm">
             {(result.r?.scenarios || []).map((sc) => (
-              <div key={sc.scenario} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+              <div key={sc.scenario} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                 <div className="flex items-center justify-between">
-                  <div className="font-semibold text-slate-100">{sc.scenario}</div>
-                  <div className="text-slate-300">{formatPKR(sc.tax)}</div>
+                  <div className="font-semibold text-slate-900">{sc.scenario}</div>
+                  <div className="text-slate-700">{formatPKR(sc.tax)}</div>
                 </div>
                 <div className="mt-1 text-xs text-slate-500">Net: {formatPKR(sc.netProfit)}</div>
               </div>
@@ -1591,19 +1503,19 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
       {result && result.mode === 'filer' ? (
         <Card title="Filer vs Non-Filer" subtitle={result.r?.recommendation || ''}>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
               <div className="text-xs text-slate-500">Filer Tax</div>
-              <div className="text-slate-100 font-semibold">{formatPKR(result.r?.filer?.tax || 0)}</div>
+              <div className="text-slate-900 font-semibold">{formatPKR(result.r?.filer?.tax || 0)}</div>
               <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.filer?.netProfit || 0)}</div>
             </div>
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 p-3">
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
               <div className="text-xs text-slate-500">Non-Filer Tax</div>
-              <div className="text-slate-100 font-semibold">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
+              <div className="text-slate-900 font-semibold">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
               <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.nonFiler?.netProfit || 0)}</div>
             </div>
           </div>
-          <div className="mt-3 text-sm text-slate-300">
-            Savings by being filer: <span className="text-emerald-400 font-semibold">{formatPKR(result.r?.savingsByBeingFiler || 0)}</span>
+          <div className="mt-3 text-sm text-slate-500">
+            Savings by being filer: <span className="text-emerald-700 font-semibold">{formatPKR(result.r?.savingsByBeingFiler || 0)}</span>
           </div>
         </Card>
       ) : null}
@@ -1656,14 +1568,14 @@ export default function App() {
       const url = new URL(window.location.href)
       url.searchParams.set('tab', nextTab)
       window.history.pushState({}, '', url)
-    } catch {}
+    } catch { }
   }, [])
 
   if (!engine.ready) {
     return (
-      <div className="min-h-dvh flex flex-col">
+      <div className="min-h-dvh flex flex-col bg-slate-50">
         <header className="px-4 pt-6 pb-4">
-          <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
+          <div className="text-sm text-emerald-600 font-extrabold uppercase tracking-widest">PakFolio</div>
           <div className="mt-2">
             <SkeletonBlock className="h-6 w-40 rounded-xl" />
           </div>
@@ -1676,24 +1588,24 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="min-h-dvh flex flex-col bg-slate-50">
       {upgradeVisible && <UpgradeModal onClose={() => setUpgradeVisible(false)} />}
 
       <header className="px-4 pt-6 pb-4">
         <div className="flex items-center gap-2">
-          <div className="text-sm text-emerald-400 font-semibold">PakFolio</div>
+          <div className="text-sm text-emerald-600 font-extrabold uppercase tracking-widest">PakFolio</div>
           {profile.isPremium && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 border border-emerald-200 text-emerald-700">
               PRO
             </span>
           )}
         </div>
-        <div className="text-xl font-bold tracking-tight">
+        <div className="text-xl font-extrabold tracking-tight text-slate-900">
           {tab === 'home'
             ? 'Dashboard'
             : tab === 'add'
               ? 'Add'
-            : tab === 'portfolio'
+              : tab === 'portfolio'
                 ? 'Holdings'
                 : tab === 'whatif'
                   ? 'What-If'
@@ -1725,8 +1637,8 @@ export default function App() {
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} profile={profile} activate={activate} /> : null}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto max-w-md grid grid-cols-5 px-2 py-2 text-xs text-slate-300">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-slate-100 pb-[env(safe-area-inset-bottom)] shadow-lg">
+        <div className="mx-auto max-w-md grid grid-cols-5 px-2 py-2 text-xs text-slate-500">
           <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')}>
             Home
           </TabButton>
