@@ -1,4 +1,29 @@
 ﻿import React from 'react'
+import {
+  LayoutDashboard,
+  Briefcase,
+  PlusCircle,
+  FileText,
+  Settings,
+  MoreHorizontal,
+  ChevronRight,
+  BarChart3,
+  History,
+  TrendingUp,
+  AlertCircle,
+  Info,
+  Calendar,
+  DollarSign,
+  CheckCircle2,
+  XCircle,
+  Trash2,
+  Download,
+  RefreshCw,
+  Zap,
+  ShieldCheck,
+  CreditCard,
+  MessageCircle
+} from 'lucide-react'
 import LicenseSettings from './LicenseSettings'
 
 function formatNumber(value) {
@@ -46,9 +71,15 @@ function useAppEngine() {
       const storageManager = new window.StorageManager()
 
       try {
-        const data = await storageManager.loadData()
+        // Add a timeout to prevent infinite loading if IndexedDB hangs
+        const dataPromise = storageManager.loadData()
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout loading data')), 3000))
+
+        const data = await Promise.race([dataPromise, timeoutPromise]).catch(() => null)
         if (data) fifoQueue.importData(data)
-      } catch (e) { }
+      } catch (e) {
+        console.warn('Storage initialization issue:', e)
+      }
 
       const settings = storageManager.loadSettings()
       if (settings && typeof settings.filerStatus === 'boolean') {
@@ -210,44 +241,54 @@ function HistorySkeleton() {
   )
 }
 
-function TabButton({ active, children, onClick }) {
+function TabButton({ active, children, onClick, icon: Icon }) {
   return (
     <button
       onClick={onClick}
       className={
-        'py-2 rounded-xl transition-all active:scale-[0.98] ' +
-        (active ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-200')
+        'flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all active:scale-[0.95] ' +
+        (active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600')
       }
     >
-      {children}
+      <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+      <span className="text-[10px] font-bold uppercase tracking-tight">{children}</span>
     </button>
   )
 }
 
-function PrimaryTabButton({ active, children, onClick }) {
+function PrimaryTabButton({ active, children, onClick, icon: Icon }) {
   return (
-    <button
-      onClick={onClick}
-      className={
-        'py-2 rounded-2xl transition-all active:scale-[0.98] font-bold shadow-sm ' +
-        (active
-          ? 'bg-emerald-500 text-emerald-950'
-          : 'bg-emerald-500/90 text-emerald-950 hover:brightness-110')
-      }
-    >
-      {children}
-    </button>
+    <div className="relative -mt-6 flex justify-center">
+      <button
+        onClick={onClick}
+        className={
+          'flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-4 ring-white transition-all active:scale-[0.9] ' +
+          (active
+            ? 'bg-emerald-600 text-white'
+            : 'bg-emerald-500 text-white hover:brightness-110')
+        }
+      >
+        <Icon size={28} strokeWidth={2.5} />
+      </button>
+    </div>
   )
 }
 
-function Card({ title, subtitle, children }) {
+function Card({ title, subtitle, children, icon: Icon }) {
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
-      <div>
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        {subtitle ? <div className="text-xs text-slate-500 mt-0.5">{subtitle}</div> : null}
+    <div className="rounded-2xl bg-white border border-slate-200/60 p-5 shadow-sm">
+      <div className="flex items-center gap-3">
+        {Icon && (
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+            <Icon size={18} />
+          </div>
+        )}
+        <div className="flex-1">
+          <div className="text-sm font-bold text-slate-900 leading-tight">{title}</div>
+          {subtitle ? <div className="text-[11px] text-slate-500 font-medium mt-0.5">{subtitle}</div> : null}
+        </div>
       </div>
-      <div className="mt-3">{children}</div>
+      <div className="mt-4">{children}</div>
     </div>
   )
 }
@@ -267,87 +308,82 @@ function UpgradeModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm px-4 pb-6">
-      <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 flex flex-col max-h-[88vh] shadow-2xl">
+      <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 flex flex-col max-h-[88vh] shadow-2xl animate-in fade-in slide-in-from-bottom-5 duration-300">
         {/* Sticky header */}
-        <div className="flex items-start justify-between p-5 border-b border-slate-100 flex-shrink-0">
+        <div className="flex items-start justify-between p-6 border-b border-slate-100 flex-shrink-0">
           <div>
-            <div className="text-base font-bold text-slate-900">Unlock Pro Features</div>
-            <div className="text-emerald-600 font-semibold text-sm mt-0.5">{PRO_PRICE}</div>
+            <div className="text-lg font-bold text-slate-900 leading-tight">Unlock Pro Features</div>
+            <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm mt-1">
+              <Zap size={14} fill="currentColor" />
+              {PRO_PRICE}
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none pl-3">✕</button>
+          <button type="button" onClick={onClose} className="rounded-full h-8 w-8 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-slate-600 transition-all">
+            <XCircle size={20} />
+          </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+        <div className="overflow-y-auto flex-1 p-6 space-y-6">
           {/* Pro features */}
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">What You Get</div>
-            <ul className="space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Unlimited Tax Report exports</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Unlimited What-If scenarios</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Corporate Actions (Bonus / Right Issues)</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Bulk CSV Upload / Import</li>
-              <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Priority WhatsApp support</li>
+            <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">What You Get</div>
+            <ul className="space-y-3">
+              {[
+                { label: 'Unlimited Tax Report exports', icon: FileText },
+                { label: 'Unlimited What-If scenarios', icon: TrendingUp },
+                { label: 'Corporate Actions (Bonus/Right)', icon: Zap },
+                { label: 'Bulk CSV Upload / Import', icon: PlusCircle },
+                { label: 'Priority WhatsApp support', icon: MessageCircle },
+              ].map((feat, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
+                  <div className="mt-0.5 flex-shrink-0 text-emerald-500">
+                    <CheckCircle2 size={16} strokeWidth={3} />
+                  </div>
+                  <span className="font-medium">{feat.label}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Payment methods */}
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Methods</div>
-            <div className="space-y-2">
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                <div className="text-[11px] font-bold text-emerald-600 mb-1.5">JazzCash / EasyPaisa</div>
-                <div className="font-mono text-base text-slate-900 font-bold tracking-wide">{JAZZCASH_NUMBER}</div>
-                <div className="text-xs text-slate-500 mt-0.5">Send {PRO_PRICE}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                <div className="text-[11px] font-bold text-emerald-600 mb-1.5">Bank Transfer (NIFT / IBFT)</div>
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                  <span className="text-slate-500">Name</span>
-                  <span className="text-slate-900 font-semibold">{BANK_NAME}</span>
-                  <span className="text-slate-500">IBAN</span>
-                  <span className="font-mono text-slate-900 font-semibold break-all">{BANK_IBAN}</span>
+            <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">How to Upgrade</div>
+            <div className="space-y-3">
+              <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-700 mb-1.5 uppercase tracking-wider">
+                  <CreditCard size={12} />
+                  JazzCash / EasyPaisa
                 </div>
+                <div className="font-mono text-lg text-slate-900 font-black tracking-widest">{JAZZCASH_NUMBER}</div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  <ShieldCheck size={12} />
+                  Bank Transfer (IBAN)
+                </div>
+                <div className="font-mono text-[10px] text-slate-900 font-bold break-all">{BANK_IBAN}</div>
+                <div className="text-[10px] text-slate-500 mt-1 font-medium italic text-right w-full">Acc: {BANK_NAME}</div>
               </div>
             </div>
           </div>
-
-          {/* Steps */}
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">How It Works</div>
-            <ol className="space-y-2">
-              {[
-                `Pay ${PRO_PRICE} via JazzCash, EasyPaisa, or bank transfer above`,
-                'Screenshot your payment / transaction receipt',
-                `Send the screenshot on WhatsApp to ${WHATSAPP_DISPLAY}`,
-                'Receive your license key (PF-2026-XXXX) — usually within a few hours',
-                'Go to Settings → License and enter the key to activate Pro',
-              ].map((step, i) => (
-                <li key={i} className="flex gap-2.5 text-sm text-slate-600">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-bold flex items-center justify-center mt-0.5">
-                    {i + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
         </div>
 
-        {/* Sticky footer */}
-        <div className="p-5 border-t border-slate-800 space-y-2 flex-shrink-0">
+        {/* Footer actions */}
+        <div className="p-6 pt-0 space-y-3 flex-shrink-0">
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 py-3 text-sm font-semibold text-emerald-300"
+            className="flex items-center justify-center gap-2 w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-all"
           >
-            WhatsApp {WHATSAPP_DISPLAY}
+            <MessageCircle size={18} />
+            Contact Support & Upgrade
           </a>
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 py-2.5 text-sm text-slate-400"
+            className="w-full rounded-2xl bg-slate-50 border border-slate-100 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"
           >
             Maybe Later
           </button>
@@ -361,14 +397,14 @@ function LockedFeatureScreen({ featureName, showUpgrade }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-20 px-6 space-y-4">
       <div className="text-5xl">🔒</div>
-      <div className="text-base font-bold text-slate-100">{featureName} — Pro Only</div>
-      <div className="text-sm text-slate-400 max-w-xs leading-relaxed">
+      <div className="text-base font-bold text-slate-900">{featureName} — Pro Only</div>
+      <div className="text-sm text-slate-500 max-w-xs leading-relaxed">
         This feature is included in the Pro plan. Upgrade for {PRO_PRICE} to unlock it along with unlimited exports and more.
       </div>
       <button
         type="button"
         onClick={showUpgrade}
-        className="mt-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-6 py-2.5 text-sm font-semibold text-emerald-300"
+        className="mt-2 rounded-xl bg-emerald-600 border border-emerald-700 px-6 py-2.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-all"
       >
         Upgrade to Pro — {PRO_PRICE}
       </button>
@@ -432,68 +468,88 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
 
   return (
     <div className="space-y-4">
-      <Card title="Tax Summary" subtitle={engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}>
-        <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-            <div className="text-xs text-slate-500">Sales</div>
-            <div className="text-slate-900 font-semibold">{totalSales}</div>
+      <Card title="Tax Summary" subtitle={engine.taxCalculator.isFiler ? 'Filer Status: Active' : 'Filer Status: Inactive'} icon={BarChart3}>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100">
+            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <History size={10} className="text-emerald-500" />
+              Sales
+            </div>
+            <div className="text-slate-900 font-black text-lg">{totalSales}</div>
           </div>
-          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-            <div className="text-xs text-slate-500">Total Gain</div>
-            <div className={totalGain >= 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}>
+          <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100">
+            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <TrendingUp size={10} className="text-emerald-500" />
+              Total Gain
+            </div>
+            <div className={`font-black text-lg ${totalGain >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               {formatPKR(totalGain)}
             </div>
           </div>
-          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-            <div className="text-xs text-slate-500">Tax Payable</div>
-            <div className="text-rose-600 font-semibold">{formatPKR(totalTax)}</div>
+          <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-rose-100">
+            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <DollarSign size={10} className="text-rose-500" />
+              Tax Due
+            </div>
+            <div className="text-rose-600 font-black text-lg">{formatPKR(totalTax)}</div>
           </div>
         </div>
 
         {!isPremium && (
-          <div className="mt-2 text-xs text-slate-500 text-right">
-            {taxUsed}/{taxLimit} exports used
+          <div className="mt-4 px-1 flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+            <span>Free Usage Limits</span>
+            <span className="text-emerald-600">{taxUsed} / {taxLimit} exports used</span>
           </div>
         )}
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={handleExportPdf}
-            className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && taxUsed >= taxLimit
-              ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-              : 'bg-slate-950/40 border-slate-800 text-slate-100'
+            className={`flex items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition-all active:scale-[0.98] ${!isPremium && taxUsed >= taxLimit
+              ? 'bg-slate-50 border-slate-100 text-slate-300'
+              : 'bg-emerald-600 border-emerald-700 text-white shadow-md hover:bg-emerald-700'
               }`}
           >
-            {!isPremium && taxUsed >= taxLimit ? '🔒 Export PDF' : 'Export PDF'}
+            <Download size={18} />
+            {!isPremium && taxUsed >= taxLimit ? '🔒 PDF Report' : 'Download PDF'}
           </button>
           <button
             type="button"
             onClick={handleExportJson}
-            className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && taxUsed >= taxLimit
-              ? 'bg-slate-950/20 border-slate-800/50 text-slate-500'
-              : 'bg-slate-950/40 border-slate-800 text-slate-100'
+            className={`flex items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition-all active:scale-[0.98] ${!isPremium && taxUsed >= taxLimit
+              ? 'bg-slate-50 border-slate-100 text-slate-300'
+              : 'bg-white border-slate-200 text-slate-900 shadow-sm hover:bg-slate-50'
               }`}
           >
+            <PlusCircle size={18} />
             {!isPremium && taxUsed >= taxLimit ? '🔒 Export JSON' : 'Export JSON'}
           </button>
         </div>
       </Card>
 
       {showSuperTax ? (
-        <Card title="Super Tax (Section 4C)" subtitle="Net realized gain threshold">
-          <div className="text-sm text-slate-300">
-            Your net realized gain exceeds <span className="font-semibold text-slate-100">Rs. 150,000,000</span>. You may have additional obligations under
-            <span className="font-semibold text-slate-100"> Section 4C (Super Tax)</span>.
+        <Card title="Super Tax (Section 4C)" subtitle="Realized gain > 150M" icon={AlertCircle}>
+          <div className="text-sm text-slate-600 leading-relaxed">
+            Your net realized gain exceeds <span className="font-black text-slate-900 underline decoration-emerald-500/30">Rs. 150,000,000</span>. You may have additional obligations under
+            <span className="font-black text-slate-900 border-b border-rose-200"> Section 4C (Super Tax)</span>.
           </div>
-          <div className="mt-2 text-xs text-slate-500">This is an informational alert only. Verify with your tax certificate and advisor.</div>
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-100 p-3 text-[11px] text-amber-800 font-medium leading-tight">
+            <Info size={14} className="flex-shrink-0" />
+            Verify with your official tax certificate and consultant.
+          </div>
         </Card>
       ) : null}
 
-      <Card title="Realized Sales" subtitle="FIFO sale breakdown">
-        <div className="space-y-2">
+      <Card title="Realized Sales" subtitle="Transaction history breakdown" icon={History}>
+        <div className="space-y-3">
           {realized.length === 0 ? (
-            <div className="text-sm text-slate-400">No sales recorded yet.</div>
+            <div className="flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
+              <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center">
+                <FileText size={24} />
+              </div>
+              <div className="text-sm font-bold uppercase tracking-widest text-[10px]">No sales recorded</div>
+            </div>
           ) : (
             realized
               .slice()
@@ -502,33 +558,32 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
                 const tax = engine.taxCalculator.calculateTaxForSale(sale)
                 const soldQty = Number(sale.quantitySold || 0)
                 return (
-                  <div key={idx} className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm">
+                  <div key={idx} className="rounded-2xl bg-white border border-slate-200/60 p-5 transition-all hover:bg-slate-50 group shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div className="font-semibold text-slate-900">{sale.symbol}</div>
-                      <div className="text-slate-600">{formatNumber(soldQty)} shares</div>
+                      <div className="font-black text-slate-900 tracking-tight text-base group-hover:text-emerald-700 transition-colors uppercase">{sale.symbol}</div>
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        {formatNumber(soldQty)} shares
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">Date: {String(sale.saleDate || '').slice(0, 10)}</div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <div className="text-slate-500">Gain</div>
-                        <div
-                          className={
-                            Number(sale.capitalGain || 0) >= 0
-                              ? 'text-emerald-600 font-semibold'
-                              : 'text-rose-600 font-semibold'
-                          }
-                        >
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Gain</div>
+                        <div className={`font-black text-[12px] truncate ${Number(sale.capitalGain || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                           {formatPKR(sale.capitalGain || 0)}
                         </div>
                       </div>
-                      <div>
-                        <div className="text-slate-500">Tax</div>
-                        <div className="text-slate-900 font-semibold">{formatPKR(tax.totalTax || 0)}</div>
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Tax Paid</div>
+                        <div className="text-slate-900 font-black text-[12px] truncate">{formatPKR(tax.totalTax || 0)}</div>
                       </div>
-                      <div>
-                        <div className="text-slate-500">Net</div>
-                        <div className="text-slate-900 font-semibold">{formatPKR(tax.netProfit || 0)}</div>
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Net Profit</div>
+                        <div className="text-slate-900 font-black text-[12px] truncate">{formatPKR(tax.netProfit || 0)}</div>
                       </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      <Calendar size={12} className="text-emerald-500" />
+                      Sale: {String(sale.saleDate || '').slice(0, 10)}
                     </div>
                   </div>
                 )
@@ -552,44 +607,64 @@ function TransactionHistoryScreen({ engine }) {
 
   return (
     <div className="space-y-4">
-      <Card title="Transaction History" subtitle="All buys and sells">
-        <div className="space-y-3">
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
-            placeholder="Filter by symbol (e.g., OGDC)"
-          />
-          <div className="text-xs text-slate-500">{filtered.length} transactions</div>
+      <Card title="Search History" subtitle="Monitor all trade and corporate actions" icon={History}>
+        <div className="space-y-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <LayoutDashboard size={18} />
+            </div>
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full rounded-2xl bg-slate-50 border border-slate-200 pl-11 pr-4 py-3.5 text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none"
+              placeholder="Filter by symbol (e.g., OGDC)"
+            />
+          </div>
+          <div className="flex items-center gap-2 px-1 text-[10px] text-slate-500 font-black uppercase tracking-widest">
+            <AlertCircle size={12} className="text-emerald-500" />
+            Found {filtered.length} transactions
+          </div>
         </div>
       </Card>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {filtered.length === 0 ? (
-          <Card title="No transactions" subtitle="">
-            <div className="text-sm text-slate-400">Nothing to show.</div>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
+            <div className="h-16 w-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+              <FileText size={32} />
+            </div>
+            <div className="text-xs font-black uppercase tracking-[0.2em]">No transactions found</div>
+          </div>
         ) : (
           filtered.map((t, idx) => (
-            <div key={idx} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div key={idx} className="rounded-2xl bg-white border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
               <div className="flex items-center justify-between">
-                <div className="font-bold tracking-tight text-slate-900">{String(t.symbol || '').toUpperCase()}</div>
-                <div className={t.type === 'SELL' ? 'text-rose-600 font-semibold' : 'text-emerald-600 font-semibold'}>
+                <div className="font-black text-slate-900 tracking-tight text-lg group-hover:text-emerald-700 transition-colors uppercase">{String(t.symbol || '').toUpperCase()}</div>
+                <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm ${t.type === 'SELL' ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
                   {t.type}
                 </div>
               </div>
-              <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                <div>
-                  <div className="text-slate-500">Qty</div>
-                  <div className="text-slate-100 font-semibold">{formatNumber(t.quantity || 0)}</div>
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
+                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                    <Briefcase size={10} className="text-emerald-500 flex-shrink-0" />
+                    Shares
+                  </div>
+                  <div className="text-slate-900 font-black text-sm">{formatNumber(t.quantity || 0)}</div>
                 </div>
-                <div>
-                  <div className="text-slate-500">Price</div>
-                  <div className="text-slate-100 font-semibold">{formatPKR(t.price || 0)}</div>
+                <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
+                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                    <DollarSign size={10} className="text-emerald-500 flex-shrink-0" />
+                    Price
+                  </div>
+                  <div className="text-slate-900 font-black text-sm">{formatPKR(t.price || 0)}</div>
                 </div>
-                <div>
-                  <div className="text-slate-500">Date</div>
-                  <div className="text-slate-100 font-semibold">{String(t.tradeDate || '').slice(0, 10)}</div>
+                <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
+                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                    <Calendar size={10} className="text-emerald-500 flex-shrink-0" />
+                    Date
+                  </div>
+                  <div className="text-slate-900 font-black text-sm">{String(t.tradeDate || '').slice(0, 10)}</div>
                 </div>
               </div>
             </div>
@@ -602,191 +677,146 @@ function TransactionHistoryScreen({ engine }) {
 
 function CorporateActionsScreen({ engine, persist, onChanged }) {
   const [symbol, setSymbol] = React.useState('')
-  const [actionType, setActionType] = React.useState('BONUS')
+  const [type, setType] = React.useState('BONUS')
   const [ratio, setRatio] = React.useState('')
-  const [exDate, setExDate] = React.useState(todayISO())
-  const [rightPrice, setRightPrice] = React.useState('')
-  const [subscriptionDate, setSubscriptionDate] = React.useState('')
-  const [message, setMessage] = React.useState(null)
+  const [date, setDate] = React.useState(todayISO())
+  const [msg, setMsg] = React.useState(null)
 
-  const manager = React.useMemo(() => {
-    if (typeof window === 'undefined' || !window.CorporateActionsManager) return null
-    return new window.CorporateActionsManager(engine.fifoQueue, engine.storageManager)
-  }, [engine])
+  const history = engine.fifoQueue.getCorporateActions ? engine.fifoQueue.getCorporateActions() : []
 
-  const actions = manager ? manager.getCorporateActions() : []
-
-  const apply = () => {
-    setMessage(null)
-    if (!manager) return setMessage({ kind: 'error', text: 'Corporate Actions engine not detected' })
-
+  const onSubmit = (e) => {
+    e.preventDefault()
+    setMsg(null)
     const s = (symbol || '').trim().toUpperCase()
-    if (!s) return setMessage({ kind: 'error', text: 'Enter a symbol' })
-    if (!exDate) return setMessage({ kind: 'error', text: 'Enter an ex-date' })
+    if (!s) return setMsg({ kind: 'error', text: 'Enter symbol' })
+    if (!ratio) return setMsg({ kind: 'error', text: 'Enter ratio' })
 
     try {
-      if (actionType === 'BONUS') {
-        manager.applyCorporateAction(s, 'BONUS', { ratio, exDate })
-      } else {
-        if (!rightPrice) return setMessage({ kind: 'error', text: 'Enter right price' })
-        const details = { ratio, price: Number(rightPrice || 0), exDate }
-        if (subscriptionDate) details.subscriptionDate = subscriptionDate
-        manager.applyCorporateAction(s, 'RIGHT', details)
-      }
-
+      engine.fifoQueue.applyCorporateAction(type, s, ratio, date)
       persist()
+      setMsg({ kind: 'ok', text: `Action applied to ${s}` })
+      setSymbol('')
+      setRatio('')
       onChanged()
-      setMessage({ kind: 'ok', text: 'Corporate action applied' })
-    } catch (e) {
-      setMessage({ kind: 'error', text: e?.message || 'Failed to apply corporate action' })
+    } catch (err) {
+      setMsg({ kind: 'error', text: err?.message || 'Failed' })
     }
   }
 
   const undo = (id) => {
-    if (!manager) return
     try {
-      manager.reverseCorporateAction(id)
+      engine.fifoQueue.undoCorporateAction(id)
       persist()
       onChanged()
-    } catch (e) {
-      setMessage({ kind: 'error', text: e?.message || 'Failed to undo' })
+    } catch (err) {
+      alert(err.message)
     }
   }
 
   return (
     <div className="space-y-4">
-      <Card title="Apply Corporate Action" subtitle="Bonus shares and right issues">
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+      <Card title="Corporate Actions" subtitle="Bonus, Right Issues, and Splits" icon={Zap}>
+        <form onSubmit={onSubmit} className="space-y-4 pt-1">
+          <div className="grid grid-cols-2 gap-3 p-1 bg-slate-50 rounded-2xl border border-slate-100">
             <button
               type="button"
-              onClick={() => setActionType('BONUS')}
+              onClick={() => setType('BONUS')}
               className={
-                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
-                (actionType === 'BONUS'
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+                'py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ' +
+                (type === 'BONUS' ? 'bg-white shadow-sm text-emerald-600 border border-slate-200/50' : 'text-slate-400')
               }
             >
               Bonus
             </button>
             <button
               type="button"
-              onClick={() => setActionType('RIGHT')}
+              onClick={() => setType('SPLIT')}
               className={
-                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
-                (actionType === 'RIGHT'
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-300')
+                'py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ' +
+                (type === 'SPLIT' ? 'bg-white shadow-sm text-emerald-600 border border-slate-200/50' : 'text-slate-400')
               }
             >
-              Right
+              Split
             </button>
           </div>
 
-          <div>
-            <label className="text-xs text-slate-400">Symbol</label>
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
-              placeholder="e.g., HBL"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-4">
             <div>
-              <label className="text-xs text-slate-400">Ratio</label>
+              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
               <input
-                value={ratio}
-                onChange={(e) => setRatio(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
-                placeholder={actionType === 'BONUS' ? 'e.g., 20% or 0.2' : 'e.g., 1:5'}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none uppercase"
+                placeholder="e.g. ENGRO"
               />
             </div>
-            <div>
-              <label className="text-xs text-slate-400">Ex-Date</label>
-              <input
-                type="date"
-                value={exDate}
-                onChange={(e) => setExDate(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          {actionType === 'RIGHT' ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-slate-400">Right Price</label>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Ratio / Change</label>
                 <input
-                  value={rightPrice}
-                  onChange={(e) => setRightPrice(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
-                  placeholder="e.g., 10"
+                  value={ratio}
+                  onChange={(e) => setRatio(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none"
+                  placeholder="e.g. 0.1 for 10%"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400">Subscription Date (optional)</label>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Ex-Date</label>
                 <input
                   type="date"
-                  value={subscriptionDate}
-                  onChange={(e) => setSubscriptionDate(e.target.value)}
-                  className="mt-1 w-full rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-sm"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none"
                 />
               </div>
             </div>
-          ) : null}
+          </div>
 
-          {message ? (
-            <div
-              className={
-                'rounded-xl px-3 py-2 text-sm border ' +
-                (message.kind === 'ok'
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300')
-              }
-            >
-              {message.text}
+          {msg ? (
+            <div className={`rounded-xl px-4 py-3 text-xs font-bold border ${msg.kind === 'ok' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
+              {msg.text}
             </div>
           ) : null}
 
-          <button type="button" onClick={apply} className="w-full rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2.5">
-            Apply
+          <button type="submit" className="w-full rounded-2xl bg-emerald-600 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-lg hover:brightness-110 active:scale-[0.98] transition-all">
+            Apply Action
           </button>
-        </div>
+        </form>
       </Card>
 
-      <Card title="History" subtitle="Applied corporate actions">
-        <div className="space-y-2">
-          {actions.length === 0 ? (
-            <div className="text-sm text-slate-400">No corporate actions recorded yet.</div>
+      <Card title="Action History" subtitle="Recent adjustments" icon={History}>
+        <div className="space-y-3">
+          {history.length === 0 ? (
+            <div className="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-widest">No history</div>
           ) : (
-            actions
+            history
               .slice()
               .reverse()
               .map((a) => (
-                <div key={a.id} className="rounded-xl bg-slate-950/40 border border-slate-800 p-3 text-sm">
+                <div key={a.id} className="rounded-2xl bg-slate-50/50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100 group">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-slate-100">
+                    <div className="font-black text-slate-900 group-hover:text-emerald-700 transition-colors uppercase tracking-tight">
                       {a.type} {a.symbol}
                     </div>
-                    <div className={a.applied ? 'text-emerald-300 font-semibold' : 'text-slate-400'}>
+                    <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg ${a.applied ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
                       {a.applied ? 'Applied' : 'Undone'}
                     </div>
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    Ex-Date: {String(a.exDate || '').slice(0, 10)}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+                      Ex-Date: {String(a.exDate || '').slice(0, 10)}
+                    </div>
+                    {a.applied ? (
+                      <button
+                        type="button"
+                        onClick={() => undo(a.id)}
+                        className="flex items-center gap-1.5 rounded-lg bg-rose-50 border border-rose-100 px-2.5 py-1.5 text-[10px] font-black text-rose-600 hover:bg-rose-100 transition-all uppercase tracking-widest"
+                      >
+                        <Trash2 size={12} />
+                        Undo
+                      </button>
+                    ) : null}
                   </div>
-                  {a.applied ? (
-                    <button
-                      type="button"
-                      onClick={() => undo(a.id)}
-                      className="mt-2 rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-100"
-                    >
-                      Undo
-                    </button>
-                  ) : null}
                 </div>
               ))
           )}
@@ -797,95 +827,91 @@ function CorporateActionsScreen({ engine, persist, onChanged }) {
 }
 
 function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
+  const menuItems = [
+    { label: 'Tax Report', icon: FileText, tab: 'tax', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'History', icon: History, tab: 'history', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'What-If', icon: TrendingUp, tab: 'whatif', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Actions', icon: Zap, tab: 'corporate', color: 'text-purple-600', bg: 'bg-purple-50', pro: true },
+    { label: 'Import', icon: PlusCircle, tab: 'import', color: 'text-slate-600', bg: 'bg-slate-50', pro: true },
+    { label: 'Settings', icon: Settings, tab: 'settings', color: 'text-slate-600', bg: 'bg-slate-50' },
+  ]
+
   return (
     <div className="space-y-4">
-      <Card title="Reports" subtitle="Tax and history">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-4">
+        {menuItems.map((item, i) => (
           <button
+            key={i}
             type="button"
-            onClick={() => setTabAndUrl('tax')}
-            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
+            onClick={() => {
+              if (item.pro && !isPremium) {
+                showUpgrade()
+              } else if (item.tab === 'import') {
+                alert('Bulk CSV Upload — coming soon!')
+              } else {
+                setTabAndUrl(item.tab)
+              }
+            }}
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
           >
-            Tax Report
+            <div className={`h-12 w-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center shadow-inner transition-transform group-hover:scale-110`}>
+              <item.icon size={24} />
+            </div>
+            <div className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+              {item.pro && !isPremium && <span className="text-[10px]">🔒</span>}
+              {item.label}
+            </div>
           </button>
-          <button
-            type="button"
-            onClick={() => setTabAndUrl('history')}
-            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
-          >
-            History
-          </button>
+        ))}
+      </div>
+
+      <Card title="Plan Status" subtitle="Your current subscription" icon={ShieldCheck}>
+        <div className="flex items-center justify-between p-1">
+          <div className="flex items-center gap-3">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isPremium ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+              <Zap size={20} fill={isPremium ? 'currentColor' : 'none'} />
+            </div>
+            <div>
+              <div className="text-sm font-black text-slate-900">{isPremium ? 'PakFolio Pro' : 'Free Plan'}</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{isPremium ? 'Unlimited access enabled' : 'Basic features active'}</div>
+            </div>
+          </div>
+          {!isPremium && (
+            <button
+              onClick={showUpgrade}
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-[10px] font-black text-white uppercase tracking-widest shadow-sm hover:brightness-110 active:scale-95 transition-all"
+            >
+              Upgrade
+            </button>
+          )}
         </div>
-      </Card>
-
-      <Card title="Portfolio Tools" subtitle="Adjust cost basis">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => (isPremium ? setTabAndUrl('corporate') : showUpgrade())}
-            className={`rounded-xl border py-2 text-sm font-semibold ${isPremium
-              ? 'bg-slate-50 border-slate-200 text-slate-900'
-              : 'bg-slate-50/50 border-slate-100 text-slate-400'
-              }`}
-          >
-            {isPremium ? 'Corporate Actions' : '🔒 Corp. Actions'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTabAndUrl('whatif')}
-            className="rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
-          >
-            What-If
-          </button>
-        </div>
-        {!isPremium && (
-          <div className="mt-1.5 text-xs text-slate-500">Bonus shares &amp; right issues require Pro.</div>
-        )}
-      </Card>
-
-      <Card title="Bulk Import" subtitle="Upload multiple trades at once">
-        <button
-          type="button"
-          onClick={() => (isPremium ? alert('Bulk CSV Upload — coming soon!') : showUpgrade())}
-          className={`w-full rounded-xl border py-2 text-sm font-semibold ${isPremium
-            ? 'bg-slate-50 border-slate-200 text-slate-900'
-            : 'bg-slate-50/50 border-slate-100 text-slate-400'
-            }`}
-        >
-          {isPremium ? 'Bulk CSV Upload' : '🔒 Bulk CSV Upload — Pro Only'}
-        </button>
-        {!isPremium && (
-          <div className="mt-1.5 text-xs text-slate-500">Upgrade to Pro to import trades in bulk via CSV.</div>
-        )}
-      </Card>
-
-      <Card title="Settings" subtitle="Tax status and data">
-        <button
-          type="button"
-          onClick={() => setTabAndUrl('settings')}
-          className="w-full rounded-xl bg-slate-50 border border-slate-200 py-2 text-sm font-semibold text-slate-900"
-        >
-          Open Settings
-        </button>
-        <div className="mt-2 text-xs text-slate-500">Current: {engine.taxCalculator.isFiler ? 'Filer' : 'Non-filer'}</div>
       </Card>
     </div>
   )
 }
 
-function StatTile({ label, value, subValue, tone = 'slate' }) {
+function StatTile({ label, value, subValue, tone = 'slate', icon: Icon }) {
   const toneMap = {
-    slate: 'text-slate-900',
-    emerald: 'text-emerald-700',
-    rose: 'text-rose-700',
-    amber: 'text-amber-700'
+    slate: 'bg-slate-50 border-slate-200 text-slate-900 icon-text:text-slate-400',
+    emerald: 'bg-emerald-50/50 border-emerald-100 text-emerald-700 icon-text:text-emerald-500',
+    rose: 'bg-rose-50/50 border-rose-100 text-rose-700 icon-text:text-rose-500',
+    amber: 'bg-amber-50/50 border-amber-100 text-amber-700 icon-text:text-amber-500'
   }
 
+  const currentTone = toneMap[tone] || toneMap.slate
+
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500 font-bold">{label}</div>
-      <div className={'mt-1 text-lg font-bold tracking-tight ' + (toneMap[tone] || toneMap.slate)}>{value}</div>
-      {subValue ? <div className="mt-1 text-xs text-slate-500">{subValue}</div> : null}
+    <div className={`rounded-2xl border p-4 transition-all hover:bg-white hover:shadow-md group ${currentTone.split(' ')[0]} ${currentTone.split(' ')[1]}`}>
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-black">{label}</div>
+        {Icon && (
+          <div className={`transition-colors ${currentTone.split(' ')[3].replace('icon-text:', '')}`}>
+            <Icon size={14} strokeWidth={2.5} />
+          </div>
+        )}
+      </div>
+      <div className={`mt-2 text-xl font-black tracking-tight ${currentTone.split(' ')[2]}`}>{value}</div>
+      {subValue ? <div className="mt-1 text-[10px] font-bold text-slate-400 truncate">{subValue}</div> : null}
     </div>
   )
 }
@@ -958,11 +984,12 @@ function DashboardScreen({ engine, setTabAndUrl }) {
             label="Realized Gains"
             value={formatPKR(netGains)}
             tone={netGains >= 0 ? 'emerald' : 'rose'}
+            icon={TrendingUp}
             subValue={(realizedGains || []).length ? `${(realizedGains || []).length} sales` : 'No sales yet'}
           />
-          <StatTile label="Effective Rate" value={`${formatNumber(effectiveRate)}%`} subValue={netGains > 0 ? 'Tax / gain' : 'N/A'} tone={effectiveRate > 0 ? 'amber' : 'slate'} />
-          <StatTile label="Total Shares" value={formatNumber(totalHoldingsQty)} subValue="Across all symbols" />
-          <StatTile label="Total Cost" value={formatPKR(totalHoldingsCost)} subValue="Cost basis" />
+          <StatTile label="Effective Rate" value={`${formatNumber(effectiveRate)}%`} icon={BarChart3} tone={effectiveRate > 0 ? 'amber' : 'slate'} subValue={netGains > 0 ? 'Tax / gain' : 'N/A'} />
+          <StatTile label="Total Shares" value={formatNumber(totalHoldingsQty)} icon={Briefcase} subValue="Across all symbols" />
+          <StatTile label="Total Cost" value={formatPKR(totalHoldingsCost)} icon={DollarSign} subValue="Cost basis" />
         </div>
       </div>
 
@@ -1041,20 +1068,21 @@ function PortfolioScreen({ engine }) {
 
   if (symbols.length === 0) {
     return (
-      <Card title="Portfolio" subtitle="No holdings yet">
+      <Card title="Portfolio" subtitle="No holdings yet" icon={Briefcase}>
         <div className="text-sm text-slate-500">Add a BUY transaction to begin.</div>
       </Card>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-2 flex items-center gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+    <div className="space-y-4">
+      <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-4 transition-all hover:bg-emerald-50">
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
+          <RefreshCw size={22} strokeWidth={2.5} />
         </div>
-        <div className="text-xs text-emerald-800 leading-snug">
-          Tip: <strong>Refresh the page</strong> in your browser to fetch the latest PSX market prices.
+        <div className="text-xs text-emerald-800 leading-relaxed">
+          <span className="font-black uppercase tracking-wider block mb-0.5 text-[10px]">Pro Tip</span>
+          <strong>Refresh the page</strong> in your browser to fetch the latest PSX market prices and update your portfolio value.
         </div>
       </div>
       {symbols.map((sym) => {
@@ -1064,19 +1092,28 @@ function PortfolioScreen({ engine }) {
         const avg = qty > 0 ? cost / qty : 0
 
         return (
-          <div key={sym} className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div key={sym} className="rounded-2xl bg-white border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold tracking-tight text-slate-900">{sym}</div>
-              <div className="text-sm font-semibold text-slate-600">{formatNumber(qty)} shares</div>
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Avg Cost</div>
-                <div className="text-slate-900 font-bold">{formatPKR(avg)}</div>
+              <div className="text-xl font-black tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">{sym}</div>
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-tight">
+                <Briefcase size={12} />
+                {formatNumber(qty)} shares
               </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Cost</div>
-                <div className="text-slate-900 font-bold">{formatPKR(cost)}</div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-4 transition-colors hover:bg-white hover:border-emerald-100">
+                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <ChevronRight size={10} className="text-emerald-500" />
+                  Avg Cost
+                </div>
+                <div className="text-slate-900 font-black">{formatPKR(avg)}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-4 transition-colors hover:bg-white hover:border-emerald-100">
+                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <DollarSign size={10} className="text-emerald-500" />
+                  Total Cost
+                </div>
+                <div className="text-slate-900 font-black">{formatPKR(cost)}</div>
               </div>
             </div>
           </div>
@@ -1107,7 +1144,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
       const tax = engine.taxCalculator.calculateTaxForSale(sale)
       const gain = Number(sale.capitalGain || 0)
       const taxValue = Number(tax.totalTax || 0)
-      preview = { gain, tax, net: gain - taxValue }
+      preview = { gain, tax: taxValue, net: gain - taxValue }
     } catch {
       preview = null
     }
@@ -1141,104 +1178,116 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
 
   return (
     <div className="space-y-4">
-      <Card title="Add Transaction" subtitle="FIFO (T+1 settlement)">
-        <form onSubmit={onSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+      <Card title="Add Transaction" subtitle="FIFO (T+1 settlement)" icon={PlusCircle}>
+        <form onSubmit={onSubmit} className="space-y-4 pt-1">
+          <div className="grid grid-cols-2 gap-3 p-1 bg-slate-50 rounded-2xl border border-slate-100">
             <button
               type="button"
               onClick={() => setType('BUY')}
               className={
-                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-black uppercase tracking-widest transition-all ' +
                 (type === 'BUY'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                  : 'bg-slate-50 border-slate-200 text-slate-600')
+                  ? 'bg-white shadow-sm text-emerald-600 border border-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-600')
               }
             >
+              <Download size={16} />
               Buy
             </button>
             <button
               type="button"
               onClick={() => setType('SELL')}
               className={
-                'rounded-xl px-3 py-2 text-sm font-semibold border ' +
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-black uppercase tracking-widest transition-all ' +
                 (type === 'SELL'
-                  ? 'bg-rose-50 border-rose-200 text-rose-700'
-                  : 'bg-slate-50 border-slate-200 text-slate-600')
+                  ? 'bg-white shadow-sm text-rose-600 border border-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-600')
               }
             >
+              <TrendingUp size={16} className="rotate-180" />
               Sell
             </button>
           </div>
 
-          <div>
-            <label className="text-xs text-slate-500">Symbol</label>
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-              placeholder="e.g., OGDC"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-4">
             <div>
-              <label className="text-xs text-slate-500">Quantity</label>
+              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
               <input
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                placeholder="100"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all uppercase tracking-widest"
+                placeholder="e.g. OGDC"
               />
             </div>
-            <div>
-              <label className="text-xs text-slate-500">Price</label>
-              <input
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                placeholder="100.00"
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Quantity</label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 block">Brokerage/Fees (%)</label>
-            <input
-              value={feePercent}
-              onChange={(e) => setFeePercent(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold"
-              placeholder="0.5 (default)"
-            />
-            <div className="mt-1 text-[11px] text-slate-400 font-medium italic">Leave blank to use the default 0.5% incidental expense adjustment.</div>
-          </div>
-
-          <div>
-            <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 block">Trade Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-semibold"
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Fees % (adj)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={feePercent}
+                  onChange={(e) => setFeePercent(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                  placeholder="0.5"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Trade Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
           </div>
 
           {preview ? (
-            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm">
-              <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Tax Preview</div>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Gain</div>
-                  <div className={preview.gain >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
+            <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="text-[10px] text-emerald-800 font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <Zap size={14} fill="currentColor" />
+                Instant Tax Analysis
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <div className="text-[9px] text-emerald-600/70 font-black uppercase tracking-widest">Gain</div>
+                  <div className={`text-base font-black truncate ${preview.gain >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                     {formatPKR(preview.gain)}
                   </div>
                 </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tax</div>
-                  <div className="text-slate-900 font-bold">{formatPKR(preview.tax)}</div>
+                <div className="text-center">
+                  <div className="text-[9px] text-emerald-600/70 font-black uppercase tracking-widest">Est. Tax</div>
+                  <div className="text-slate-900 font-black text-base truncate">{formatPKR(preview.tax)}</div>
                 </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Net</div>
-                  <div className={preview.net >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
+                <div className="text-center border-l border-emerald-100">
+                  <div className="text-[9px] text-emerald-800/80 font-black uppercase tracking-widest">Net</div>
+                  <div className={`text-base font-black truncate ${preview.net >= 0 ? 'text-emerald-900' : 'text-rose-900'}`}>
                     {formatPKR(preview.net)}
                   </div>
                 </div>
@@ -1249,21 +1298,33 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
           {message ? (
             <div
               className={
-                'rounded-xl px-3 py-2 text-sm border ' +
+                'rounded-2xl px-4 py-3 text-xs font-bold border flex items-center gap-3 transition-all ' +
                 (message.kind === 'ok'
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
-                  : 'bg-rose-500/10 border-rose-500/30 text-rose-700')
+                  ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                  : 'bg-rose-50 border-rose-100 text-rose-800')
               }
             >
+              {message.kind === 'ok' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
               {message.text}
             </div>
           ) : null}
 
-          <button type="submit" className="w-full rounded-xl bg-emerald-500 text-emerald-950 font-bold py-2.5">
-            Save
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all mt-2"
+          >
+            <PlusCircle size={20} />
+            Commit Transaction
           </button>
         </form>
       </Card>
+
+      <div className="py-2 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] text-slate-500 font-black uppercase tracking-widest">
+          <ShieldCheck size={12} className="text-emerald-500" />
+          SECURE LOCAL ENCRYPTION ACTIVE
+        </div>
+      </div>
     </div>
   )
 }
@@ -1294,48 +1355,82 @@ function SettingsScreen({ engine, persistSettings, onReset, profile, activate })
 
   return (
     <div className="space-y-4">
-      <Card title="Tax Status" subtitle="Used for tax calculations">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold">Filer</div>
-            <div className="text-xs text-slate-500">Toggle to non-filer if applicable</div>
+      <Card title="Tax Configuration" subtitle="Define your investor status" icon={Settings}>
+        <div className="flex items-center justify-between gap-4 p-1">
+          <div className="flex-1">
+            <div className="text-sm font-black text-slate-900 flex items-center gap-2">
+              Filer Status
+              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${isFiler ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                {isFiler ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium mt-0.5">Toggle to non-filer if you are not in the ATL.</div>
           </div>
           <button
             type="button"
             onClick={toggle}
             className={
-              'px-3 py-2 rounded-xl text-sm font-semibold border ' +
-              (isFiler
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
-                : 'bg-slate-50 border-slate-200 text-slate-600')
+              'relative inline-flex h-7 w-12 items-center rounded-full transition-colors outline-none ' +
+              (isFiler ? 'bg-emerald-500' : 'bg-slate-200')
             }
           >
-            {isFiler ? 'On' : 'Off'}
+            <span
+              className={
+                'inline-block h-5 w-5 transform rounded-full bg-white transition-transform ' +
+                (isFiler ? 'translate-x-6' : 'translate-x-1')
+              }
+            />
           </button>
         </div>
       </Card>
 
-      <Card title="Data" subtitle="Stored locally on your device">
-        <div className="grid grid-cols-2 gap-2">
+      <Card title="Database & Storage" subtitle="Manage your local data" icon={ShieldCheck}>
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={exportData}
-            className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white border border-slate-200 py-3.5 text-xs font-black uppercase tracking-widest text-slate-900 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
-            Export
+            <Download size={14} className="text-emerald-500" />
+            Export Data
           </button>
           <button
             type="button"
             onClick={clearData}
-            className="rounded-xl bg-rose-50 border border-rose-100 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-100/50 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white border border-slate-200 py-3.5 text-xs font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 transition-all shadow-sm active:scale-95"
           >
-            Clear
+            <Trash2 size={14} />
+            Wipe Device
           </button>
+        </div>
+        <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight">
+          <Info size={14} className="text-emerald-500" />
+          All data is stored locally in your browser's IndexedDB. We never see your trades.
         </div>
       </Card>
 
-      <Card title="License" subtitle="Manage your plan">
-        <LicenseSettings profile={profile || { isPremium: false, licenseKey: '', usageCount: { taxReport: 0, whatIf: 0 } }} onActivate={activate || (() => ({ success: false, message: 'Not ready' }))} />
+      <Card title="License & Support" subtitle="Help and Pro access" icon={Zap}>
+        <LicenseSettings
+          profile={profile || { isPremium: false, licenseKey: '', usageCount: { taxReport: 0, whatIf: 0 } }}
+          onActivate={activate || (() => ({ success: false, message: 'Not ready' }))}
+        />
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <button
+            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
+            className="w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-800 hover:bg-emerald-100 transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <MessageCircle size={18} />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-black uppercase tracking-widest">Chat Support</div>
+                <div className="text-[10px] opacity-70">Talk to us on WhatsApp</div>
+              </div>
+            </div>
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </Card>
     </div>
   )
@@ -1404,96 +1499,98 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
 
   return (
     <div className="space-y-4">
-      <Card title="What-If Scenarios" subtitle="Simulate trades without saving">
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-slate-500">Symbol</label>
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-              placeholder="e.g., OGDC"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+      <Card title="What-If Simulator" subtitle="Predict tax outcomes instantly" icon={TrendingUp}>
+        <div className="space-y-4 pt-1">
+          <div className="space-y-4">
             <div>
-              <label className="text-xs text-slate-500">Quantity</label>
+              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
               <input
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                placeholder="100"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all uppercase"
+                placeholder="e.g. OGDC"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Quantity</label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Sell Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs text-slate-500">Price</label>
+              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Simulated Date (Filer Compare)</label>
               <input
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-                placeholder="100.00"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
               />
             </div>
           </div>
-
-          <div>
-            <label className="text-xs text-slate-500">Trade Date (for filer comparison)</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-900"
-            />
-          </div>
-
-          {error ? (
-            <div className="rounded-xl px-3 py-2 text-sm border bg-rose-500/10 border-rose-500/30 text-rose-700">
-              {error}
-            </div>
-          ) : null}
 
           {!isPremium && (
-            <div className="text-xs text-slate-500 text-right">
-              {whatIfUsed}/{whatIfLimit} scenarios used
+            <div className="flex items-center justify-between px-1">
+              <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Free Simulator Usage</div>
+              <div className="text-[11px] text-emerald-600 font-black">{whatIfUsed} / {whatIfLimit}</div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => handleRun('timing')}
-              className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && whatIfUsed >= whatIfLimit
-                ? 'bg-slate-50/50 border-slate-100 text-slate-400'
-                : 'bg-slate-50 border-slate-200 text-slate-900'
+              className={`flex items-center justify-center gap-2 rounded-2xl border py-4 text-[11px] font-black uppercase tracking-widest transition-all ${!isPremium && whatIfUsed >= whatIfLimit
+                ? 'bg-slate-50 border-slate-100 text-slate-300 pointer-events-none'
+                : 'bg-white border-slate-200 text-slate-900 shadow-sm hover:bg-slate-50 active:scale-95'
                 }`}
             >
-              {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Timing' : 'Timing'}
+              {!isPremium && whatIfUsed >= whatIfLimit ? <ShieldCheck size={14} /> : <Calendar size={14} className="text-emerald-500" />}
+              Timing Analysis
             </button>
             <button
               type="button"
               onClick={() => handleRun('filer')}
-              className={`rounded-xl border py-2 text-sm font-semibold ${!isPremium && whatIfUsed >= whatIfLimit
-                ? 'bg-slate-50/50 border-slate-100 text-slate-400'
-                : 'bg-slate-50 border-slate-200 text-slate-900'
+              className={`flex items-center justify-center gap-2 rounded-2xl border py-4 text-[11px] font-black uppercase tracking-widest transition-all ${!isPremium && whatIfUsed >= whatIfLimit
+                ? 'bg-slate-50 border-slate-100 text-slate-300 pointer-events-none'
+                : 'bg-emerald-600 border-emerald-700 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
                 }`}
             >
-              {!isPremium && whatIfUsed >= whatIfLimit ? '🔒 Filer Compare' : 'Filer Compare'}
+              {!isPremium && whatIfUsed >= whatIfLimit ? <ShieldCheck size={14} /> : <BarChart3 size={14} />}
+              Filer Compare
             </button>
           </div>
         </div>
       </Card>
 
       {result && result.mode === 'timing' ? (
-        <Card title="Timing Analysis" subtitle={result.r?.recommendation || ''}>
-          <div className="space-y-2 text-sm">
-            {(result.r?.scenarios || []).map((sc) => (
-              <div key={sc.scenario} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+        <Card title="Timing Analysis" subtitle={result.r?.recommendation || ''} icon={Info}>
+          <div className="space-y-3">
+            {(result.r?.scenarios || []).map((sc, i) => (
+              <div key={i} className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100 group">
                 <div className="flex items-center justify-between">
-                  <div className="font-semibold text-slate-900">{sc.scenario}</div>
-                  <div className="text-slate-700">{formatPKR(sc.tax)}</div>
+                  <div className="font-black text-slate-900 group-hover:text-emerald-700 transition-colors uppercase tracking-tight text-xs">{sc.scenario}</div>
+                  <div className="text-emerald-600 font-black text-sm">{formatPKR(sc.tax)}</div>
                 </div>
-                <div className="mt-1 text-xs text-slate-500">Net: {formatPKR(sc.netProfit)}</div>
+                <div className="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Est. Net Profit: {formatPKR(sc.netProfit)}</div>
               </div>
             ))}
           </div>
@@ -1501,21 +1598,27 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
       ) : null}
 
       {result && result.mode === 'filer' ? (
-        <Card title="Filer vs Non-Filer" subtitle={result.r?.recommendation || ''}>
+        <Card title="Comparison Result" subtitle={result.r?.recommendation || ''} icon={BarChart3}>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <div className="text-xs text-slate-500">Filer Tax</div>
-              <div className="text-slate-900 font-semibold">{formatPKR(result.r?.filer?.tax || 0)}</div>
-              <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.filer?.netProfit || 0)}</div>
+            <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-4">
+              <div className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-2">As Filer</div>
+              <div className="text-slate-900 font-black text-lg truncate">{formatPKR(result.r?.filer?.tax || 0)}</div>
+              <div className="text-[10px] text-emerald-800/60 font-medium mt-1">Tax Payable</div>
             </div>
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <div className="text-xs text-slate-500">Non-Filer Tax</div>
-              <div className="text-slate-900 font-semibold">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
-              <div className="text-xs text-slate-500 mt-1">Net: {formatPKR(result.r?.nonFiler?.netProfit || 0)}</div>
+            <div className="rounded-2xl bg-rose-50/50 border border-rose-100 p-4">
+              <div className="text-[9px] text-rose-600 font-black uppercase tracking-widest mb-2">As Non-Filer</div>
+              <div className="text-slate-900 font-black text-lg truncate">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
+              <div className="text-[10px] text-rose-800/60 font-medium mt-1">Tax Payable</div>
             </div>
           </div>
-          <div className="mt-3 text-sm text-slate-500">
-            Savings by being filer: <span className="text-emerald-700 font-semibold">{formatPKR(result.r?.savingsByBeingFiler || 0)}</span>
+          <div className="mt-4 p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
+            <div>
+              <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Potential Savings</div>
+              <div className="text-xl font-black text-emerald-400">{formatPKR(result.r?.savingsByBeingFiler || 0)}</div>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400">
+              <Zap size={20} fill="currentColor" />
+            </div>
           </div>
         </Card>
       ) : null}
@@ -1637,21 +1740,21 @@ export default function App() {
         {tab === 'settings' ? <SettingsScreen engine={engine} persistSettings={persistSettings} profile={profile} activate={activate} /> : null}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-slate-100 pb-[env(safe-area-inset-bottom)] shadow-lg">
-        <div className="mx-auto max-w-md grid grid-cols-5 px-2 py-2 text-xs text-slate-500">
-          <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 pb-[env(safe-area-inset-bottom)] shadow-2xl z-40">
+        <div className="mx-auto max-w-md grid grid-cols-5 px-3 py-2">
+          <TabButton active={tab === 'home'} onClick={() => setTabAndUrl('home')} icon={LayoutDashboard}>
             Home
           </TabButton>
-          <TabButton active={tab === 'portfolio'} onClick={() => setTabAndUrl('portfolio')}>
+          <TabButton active={tab === 'portfolio'} onClick={() => setTabAndUrl('portfolio')} icon={Briefcase}>
             Holdings
           </TabButton>
-          <PrimaryTabButton active={tab === 'add'} onClick={() => setTabAndUrl('add')}>
+          <PrimaryTabButton active={tab === 'add'} onClick={() => setTabAndUrl('add')} icon={PlusCircle}>
             Add
           </PrimaryTabButton>
-          <TabButton active={tab === 'tax'} onClick={() => setTabAndUrl('tax')}>
+          <TabButton active={tab === 'tax'} onClick={() => setTabAndUrl('tax')} icon={FileText}>
             Tax
           </TabButton>
-          <TabButton active={tab === 'more'} onClick={() => setTabAndUrl('more')}>
+          <TabButton active={tab === 'more'} onClick={() => setTabAndUrl('more')} icon={MoreHorizontal}>
             More
           </TabButton>
         </div>
