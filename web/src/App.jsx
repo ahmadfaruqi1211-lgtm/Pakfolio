@@ -36,6 +36,15 @@ function formatPKR(value) {
   return `Rs. ${formatNumber(value)}`
 }
 
+function Money({ value }) {
+  return (
+    <span>
+      <span style={{ fontSize: '0.8em', fontWeight: 500 }}>Rs.{' '}</span>
+      <span style={{ fontWeight: 700, fontFeatureSettings: '"tnum" on' }}>{formatNumber(value)}</span>
+    </span>
+  )
+}
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -474,27 +483,27 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
       <Card title="Tax Summary" subtitle={engine.taxCalculator.isFiler ? 'Filer Status: Active' : 'Filer Status: Inactive'} icon={BarChart3}>
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100">
-            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5">
               <History size={10} className="text-emerald-500" />
               Sales
             </div>
             <div className="text-slate-900 font-black text-lg">{totalSales}</div>
           </div>
           <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100">
-            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5">
               <TrendingUp size={10} className="text-emerald-500" />
               Total Gain
             </div>
             <div className={`font-black text-lg ${totalGain >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {formatPKR(totalGain)}
+              <Money value={totalGain} />
             </div>
           </div>
           <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-rose-100">
-            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5">
               <DollarSign size={10} className="text-rose-500" />
               Tax Due
             </div>
-            <div className="text-rose-600 font-black text-lg">{formatPKR(totalTax)}</div>
+            <div className="text-rose-600 font-black text-lg"><Money value={totalTax} /></div>
           </div>
         </div>
 
@@ -570,18 +579,18 @@ function TaxReportScreen({ engine, isPremium, usageCount, showUpgrade, consume }
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-2">
                       <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Gain</div>
+                        <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em]">Gain</div>
                         <div className={`font-black text-[12px] truncate ${Number(sale.capitalGain || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {formatPKR(sale.capitalGain || 0)}
+                          <Money value={sale.capitalGain || 0} />
                         </div>
                       </div>
                       <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Tax Paid</div>
-                        <div className="text-slate-900 font-black text-[12px] truncate">{formatPKR(tax.totalTax || 0)}</div>
+                        <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em]">Tax Paid</div>
+                        <div className="text-slate-900 font-black text-[12px] truncate"><Money value={tax.totalTax || 0} /></div>
                       </div>
                       <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Net Profit</div>
-                        <div className="text-slate-900 font-black text-[12px] truncate">{formatPKR(tax.netProfit || 0)}</div>
+                        <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em]">Net Profit</div>
+                        <div className="text-slate-900 font-black text-[12px] truncate"><Money value={tax.netProfit || 0} /></div>
                       </div>
                     </div>
                     <div className="mt-4 flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -649,21 +658,21 @@ function TransactionHistoryScreen({ engine }) {
               </div>
               <div className="mt-5 grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
-                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                  <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5 line-clamp-1">
                     <Briefcase size={10} className="text-emerald-500 flex-shrink-0" />
                     Shares
                   </div>
                   <div className="text-slate-900 font-black text-sm">{formatNumber(t.quantity || 0)}</div>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
-                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                  <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5 line-clamp-1">
                     <DollarSign size={10} className="text-emerald-500 flex-shrink-0" />
                     Price
                   </div>
-                  <div className="text-slate-900 font-black text-sm">{formatPKR(t.price || 0)}</div>
+                  <div className="text-slate-900 font-black text-sm"><Money value={t.price || 0} /></div>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-3.5 transition-colors hover:bg-white">
-                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                  <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5 line-clamp-1">
                     <Calendar size={10} className="text-emerald-500 flex-shrink-0" />
                     Date
                   </div>
@@ -745,7 +754,7 @@ function CorporateActionsScreen({ engine, persist, onChanged }) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
+              <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Stock Symbol</label>
               <input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -755,7 +764,7 @@ function CorporateActionsScreen({ engine, persist, onChanged }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Ratio / Change</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Ratio / Change</label>
                 <input
                   value={ratio}
                   onChange={(e) => setRatio(e.target.value)}
@@ -764,7 +773,7 @@ function CorporateActionsScreen({ engine, persist, onChanged }) {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Ex-Date</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Ex-Date</label>
                 <input
                   type="date"
                   value={date}
@@ -906,7 +915,7 @@ function StatTile({ label, value, subValue, tone = 'slate', icon: Icon }) {
   return (
     <div className={`rounded-2xl border p-4 transition-all hover:bg-white hover:shadow-md ${t.bg} ${t.border}`}>
       <div className="flex items-center justify-between gap-1">
-        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-black">{label}</div>
+        <div className="text-[11px] uppercase tracking-[0.05em] text-slate-500 font-semibold">{label}</div>
         {Icon && (
           <div className={t.icon}>
             <Icon size={14} strokeWidth={2.5} />
@@ -960,10 +969,10 @@ function DashboardScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Tax payable (estimated)</div>
-            <div className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">{formatPKR(totalTax)}</div>
+            <div className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900"><Money value={totalTax} /></div>
             <div
               className={
-                'mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ' +
+                'mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] ' +
                 (engine.taxCalculator.isFiler
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   : 'border-rose-200 bg-rose-50 text-rose-700')
@@ -985,7 +994,7 @@ function DashboardScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
               <button
                 type="button"
                 onClick={showUpgrade}
-                className="rounded-2xl bg-slate-900 text-white font-bold px-4 py-2 text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
+                className="rounded-2xl bg-slate-900 text-white font-semibold px-4 py-2 text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <Zap size={14} fill="currentColor" className="text-emerald-400" />
                 Get Premium
@@ -997,20 +1006,20 @@ function DashboardScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile
             label="Realized Gains"
-            value={formatPKR(netGains)}
+            value={<Money value={netGains} />}
             tone={netGains >= 0 ? 'emerald' : 'rose'}
             icon={TrendingUp}
             subValue={(realizedGains || []).length ? `${(realizedGains || []).length} sales` : 'No sales yet'}
           />
           <StatTile label="Effective Rate" value={`${formatNumber(effectiveRate)}%`} icon={BarChart3} tone={effectiveRate > 0 ? 'amber' : 'slate'} subValue={netGains > 0 ? 'Tax / gain' : 'N/A'} />
           <StatTile label="Total Shares" value={formatNumber(totalHoldingsQty)} icon={Briefcase} subValue="Across all symbols" />
-          <StatTile label="Total Cost" value={formatPKR(totalHoldingsCost)} icon={DollarSign} subValue="Cost basis" />
+          <StatTile label="Total Cost" value={<Money value={totalHoldingsCost} />} icon={DollarSign} subValue="Cost basis" />
         </div>
       </div>
 
       {hasT1Context ? (
         <Card title="Settlement Update (T+1)" subtitle="Effective Feb 9, 2026">
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-500 leading-[1.5]">
             PSX has transitioned to T+1 settlement. Your gains and holding periods are now calculated on a 24-hour cycle.
           </div>
         </Card>
@@ -1107,10 +1116,10 @@ function PortfolioScreen({ engine }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1 pb-1">
-        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+        <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em]">
           {symbols.length} holding{symbols.length !== 1 ? 's' : ''}
         </div>
-        <div className="text-xs font-black text-slate-900">{formatPKR(totalCost)} total cost</div>
+        <div className="text-xs font-black text-slate-900"><Money value={totalCost} /> total cost</div>
       </div>
 
       {symbols.map((sym) => {
@@ -1135,18 +1144,18 @@ function PortfolioScreen({ engine }) {
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-4 transition-colors hover:bg-white hover:border-emerald-100">
-                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5">
                   <ChevronRight size={10} className="text-emerald-500" />
                   Avg Cost
                 </div>
-                <div className="text-slate-900 font-black">{formatPKR(avg)}</div>
+                <div className="text-slate-900 font-black"><Money value={avg} /></div>
               </div>
               <div className="rounded-xl bg-slate-50/50 border border-slate-100 p-4 transition-colors hover:bg-white hover:border-emerald-100">
-                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] mb-1.5 flex items-center gap-1.5">
                   <DollarSign size={10} className="text-emerald-500" />
                   Total Cost
                 </div>
-                <div className="text-slate-900 font-black">{formatPKR(cost)}</div>
+                <div className="text-slate-900 font-black"><Money value={cost} /></div>
               </div>
             </div>
           </div>
@@ -1244,7 +1253,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
+              <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Stock Symbol</label>
               <input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -1255,7 +1264,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Quantity</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Quantity</label>
                 <input
                   type="number"
                   value={quantity}
@@ -1265,7 +1274,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Price</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Price</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1279,7 +1288,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Fees % (adj)</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Fees % (adj)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1290,7 +1299,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Trade Date</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Trade Date</label>
                 <input
                   type="date"
                   value={date}
@@ -1309,19 +1318,19 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
-                  <div className="text-[9px] text-emerald-600/70 font-black uppercase tracking-widest">Gain</div>
+                  <div className="text-[11px] text-emerald-600/70 font-semibold uppercase tracking-[0.05em]">Gain</div>
                   <div className={`text-base font-black truncate ${preview.gain >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                    {formatPKR(preview.gain)}
+                    <Money value={preview.gain} />
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[9px] text-emerald-600/70 font-black uppercase tracking-widest">Est. Tax</div>
-                  <div className="text-slate-900 font-black text-base truncate">{formatPKR(preview.tax)}</div>
+                  <div className="text-[11px] text-emerald-600/70 font-semibold uppercase tracking-[0.05em]">Est. Tax</div>
+                  <div className="text-slate-900 font-black text-base truncate"><Money value={preview.tax} /></div>
                 </div>
                 <div className="text-center border-l border-emerald-100">
-                  <div className="text-[9px] text-emerald-800/80 font-black uppercase tracking-widest">Net</div>
+                  <div className="text-[11px] text-emerald-800/80 font-semibold uppercase tracking-[0.05em]">Net</div>
                   <div className={`text-base font-black truncate ${preview.net >= 0 ? 'text-emerald-900' : 'text-rose-900'}`}>
-                    {formatPKR(preview.net)}
+                    <Money value={preview.net} />
                   </div>
                 </div>
               </div>
@@ -1536,7 +1545,7 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
         <div className="space-y-4 pt-1">
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Stock Symbol</label>
+              <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Stock Symbol</label>
               <input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -1547,7 +1556,7 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Quantity</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Quantity</label>
                 <input
                   type="number"
                   value={quantity}
@@ -1557,7 +1566,7 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Sell Price</label>
+                <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Sell Price</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1570,7 +1579,7 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
             </div>
 
             <div>
-              <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1 mb-1.5 block">Simulated Date (Filer Compare)</label>
+              <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em] ml-1 mb-1.5 block">Simulated Date (Filer Compare)</label>
               <input
                 type="date"
                 value={date}
@@ -1582,7 +1591,7 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
 
           {!isPremium && (
             <div className="flex items-center justify-between px-1">
-              <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Free Simulator Usage</div>
+              <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-[0.05em]">Free Simulator Usage</div>
               <div className="text-[11px] text-emerald-600 font-black">{whatIfUsed} / {whatIfLimit}</div>
             </div>
           )}
@@ -1621,9 +1630,9 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
               <div key={i} className="rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-100 group">
                 <div className="flex items-center justify-between">
                   <div className="font-black text-slate-900 group-hover:text-emerald-700 transition-colors uppercase tracking-tight text-xs">{sc.scenario}</div>
-                  <div className="text-emerald-600 font-black text-sm">{formatPKR(sc.tax)}</div>
+                  <div className="text-emerald-600 font-black text-sm"><Money value={sc.tax} /></div>
                 </div>
-                <div className="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Est. Net Profit: {formatPKR(sc.netProfit)}</div>
+                <div className="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Est. Net Profit: <Money value={sc.netProfit} /></div>
               </div>
             ))}
           </div>
@@ -1634,20 +1643,20 @@ function WhatIfScreen({ engine, isPremium, usageCount, showUpgrade, consume }) {
         <Card title="Comparison Result" subtitle={result.r?.recommendation || ''} icon={BarChart3}>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-4">
-              <div className="text-[9px] text-emerald-600 font-black uppercase tracking-widest mb-2">As Filer</div>
-              <div className="text-slate-900 font-black text-lg truncate">{formatPKR(result.r?.filer?.tax || 0)}</div>
+              <div className="text-[11px] text-emerald-600 font-semibold uppercase tracking-[0.05em] mb-2">As Filer</div>
+              <div className="text-slate-900 font-black text-lg truncate"><Money value={result.r?.filer?.tax || 0} /></div>
               <div className="text-[10px] text-emerald-800/60 font-medium mt-1">Tax Payable</div>
             </div>
             <div className="rounded-2xl bg-rose-50/50 border border-rose-100 p-4">
-              <div className="text-[9px] text-rose-600 font-black uppercase tracking-widest mb-2">As Non-Filer</div>
-              <div className="text-slate-900 font-black text-lg truncate">{formatPKR(result.r?.nonFiler?.tax || 0)}</div>
+              <div className="text-[11px] text-rose-600 font-semibold uppercase tracking-[0.05em] mb-2">As Non-Filer</div>
+              <div className="text-slate-900 font-black text-lg truncate"><Money value={result.r?.nonFiler?.tax || 0} /></div>
               <div className="text-[10px] text-rose-800/60 font-medium mt-1">Tax Payable</div>
             </div>
           </div>
           <div className="mt-4 p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
             <div>
               <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Potential Savings</div>
-              <div className="text-xl font-black text-emerald-400">{formatPKR(result.r?.savingsByBeingFiler || 0)}</div>
+              <div className="text-xl font-black text-emerald-400"><Money value={result.r?.savingsByBeingFiler || 0} /></div>
             </div>
             <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400">
               <Zap size={20} fill="currentColor" />
