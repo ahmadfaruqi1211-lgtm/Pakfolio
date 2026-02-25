@@ -22,7 +22,8 @@ import {
   Zap,
   ShieldCheck,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  Search
 } from 'lucide-react'
 import LicenseSettings from './LicenseSettings'
 
@@ -246,10 +247,13 @@ function TabButton({ active, children, onClick, icon: Icon }) {
     <button
       onClick={onClick}
       className={
-        'flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all active:scale-[0.95] ' +
+        'relative flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all active:scale-[0.95] ' +
         (active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600')
       }
     >
+      {active && (
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 h-0.5 w-5 rounded-full bg-emerald-500" />
+      )}
       <Icon size={20} strokeWidth={active ? 2.5 : 2} />
       <span className="text-[10px] font-bold uppercase tracking-tight">{children}</span>
     </button>
@@ -360,7 +364,7 @@ function UpgradeModal({ onClose }) {
               <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
                 <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
                   <ShieldCheck size={12} />
-                  Bank Transfer (IBAN)
+                  Bank Transfer (UBL IBAN)
                 </div>
                 <div className="font-mono text-[10px] text-slate-900 font-bold break-all">{BANK_IBAN}</div>
                 <div className="text-[10px] text-slate-500 mt-1 font-medium italic text-right w-full">Acc: {BANK_NAME}</div>
@@ -611,7 +615,7 @@ function TransactionHistoryScreen({ engine }) {
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <LayoutDashboard size={18} />
+              <Search size={18} />
             </div>
             <input
               value={filter}
@@ -621,8 +625,8 @@ function TransactionHistoryScreen({ engine }) {
             />
           </div>
           <div className="flex items-center gap-2 px-1 text-[10px] text-slate-500 font-black uppercase tracking-widest">
-            <AlertCircle size={12} className="text-emerald-500" />
-            Found {filtered.length} transactions
+            <Info size={12} className="text-emerald-500" />
+            {filtered.length} transaction{filtered.length !== 1 ? 's' : ''} found
           </div>
         </div>
       </Card>
@@ -892,31 +896,31 @@ function MoreScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
 
 function StatTile({ label, value, subValue, tone = 'slate', icon: Icon }) {
   const toneMap = {
-    slate: 'bg-slate-50 border-slate-200 text-slate-900 icon-text:text-slate-400',
-    emerald: 'bg-emerald-50/50 border-emerald-100 text-emerald-700 icon-text:text-emerald-500',
-    rose: 'bg-rose-50/50 border-rose-100 text-rose-700 icon-text:text-rose-500',
-    amber: 'bg-amber-50/50 border-amber-100 text-amber-700 icon-text:text-amber-500'
+    slate:   { bg: 'bg-slate-50',      border: 'border-slate-200',  text: 'text-slate-900',   icon: 'text-slate-400' },
+    emerald: { bg: 'bg-emerald-50/50', border: 'border-emerald-100', text: 'text-emerald-700', icon: 'text-emerald-500' },
+    rose:    { bg: 'bg-rose-50/50',    border: 'border-rose-100',   text: 'text-rose-700',    icon: 'text-rose-500' },
+    amber:   { bg: 'bg-amber-50/50',   border: 'border-amber-100',  text: 'text-amber-700',   icon: 'text-amber-500' },
   }
 
-  const currentTone = toneMap[tone] || toneMap.slate
+  const t = toneMap[tone] || toneMap.slate
 
   return (
-    <div className={`rounded-2xl border p-4 transition-all hover:bg-white hover:shadow-md group ${currentTone.split(' ')[0]} ${currentTone.split(' ')[1]}`}>
+    <div className={`rounded-2xl border p-4 transition-all hover:bg-white hover:shadow-md ${t.bg} ${t.border}`}>
       <div className="flex items-center justify-between gap-1">
         <div className="text-[10px] uppercase tracking-widest text-slate-500 font-black">{label}</div>
         {Icon && (
-          <div className={`transition-colors ${currentTone.split(' ')[3].replace('icon-text:', '')}`}>
+          <div className={t.icon}>
             <Icon size={14} strokeWidth={2.5} />
           </div>
         )}
       </div>
-      <div className={`mt-2 text-xl font-black tracking-tight ${currentTone.split(' ')[2]}`}>{value}</div>
+      <div className={`mt-2 text-xl font-black tracking-tight ${t.text}`}>{value}</div>
       {subValue ? <div className="mt-1 text-[10px] font-bold text-slate-400 truncate">{subValue}</div> : null}
     </div>
   )
 }
 
-function DashboardScreen({ engine, setTabAndUrl }) {
+function DashboardScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
   const holdings = engine.fifoQueue.getHoldings()
   const realizedGains = engine.fifoQueue.getRealizedGains()
   const txns = engine.fifoQueue.getTransactions ? engine.fifoQueue.getTransactions() : []
@@ -970,13 +974,25 @@ function DashboardScreen({ engine, setTabAndUrl }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setTabAndUrl('tax')}
-            className="rounded-2xl bg-emerald-500 text-emerald-950 font-bold px-4 py-2 text-sm shadow-sm hover:brightness-110 active:brightness-95"
-          >
-            View Report
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setTabAndUrl('tax')}
+              className="rounded-2xl bg-emerald-500 text-emerald-950 font-bold px-4 py-2 text-sm shadow-sm hover:brightness-110 active:brightness-95"
+            >
+              View Report
+            </button>
+            {!isPremium && (
+              <button
+                type="button"
+                onClick={showUpgrade}
+                className="rounded-2xl bg-slate-900 text-white font-bold px-4 py-2 text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <Zap size={14} fill="currentColor" className="text-emerald-400" />
+                Get Premium
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1314,7 +1330,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
             className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all mt-2"
           >
             <PlusCircle size={20} />
-            Commit Transaction
+            Save Transaction
           </button>
         </form>
       </Card>
@@ -1677,7 +1693,7 @@ export default function App() {
   if (!engine.ready) {
     return (
       <div className="min-h-dvh flex flex-col bg-slate-50">
-        <header className="px-4 pt-6 pb-4">
+        <header className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-100/80 px-4 pt-5 pb-3">
           <div className="text-sm text-emerald-600 font-extrabold uppercase tracking-widest">PakFolio</div>
           <div className="mt-2">
             <SkeletonBlock className="h-6 w-40 rounded-xl" />
@@ -1694,7 +1710,7 @@ export default function App() {
     <div className="min-h-dvh flex flex-col bg-slate-50">
       {upgradeVisible && <UpgradeModal onClose={() => setUpgradeVisible(false)} />}
 
-      <header className="px-4 pt-6 pb-4">
+      <header className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-100/80 px-4 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <div className="text-sm text-emerald-600 font-extrabold uppercase tracking-widest">PakFolio</div>
           {profile.isPremium && (
@@ -1707,7 +1723,7 @@ export default function App() {
           {tab === 'home'
             ? 'Dashboard'
             : tab === 'add'
-              ? 'Add'
+              ? 'Add Transaction'
               : tab === 'portfolio'
                 ? 'Holdings'
                 : tab === 'whatif'
@@ -1725,7 +1741,7 @@ export default function App() {
       </header>
 
       <main className="flex-1 px-4 pb-24">
-        {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} />) : null}
+        {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} isPremium={profile.isPremium} showUpgrade={showUpgrade} />) : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} onRefresh={refresh} />) : null}
         {tab === 'whatif' ? <WhatIfScreen engine={engine} isPremium={profile.isPremium} usageCount={profile.usageCount} showUpgrade={showUpgrade} consume={consume} /> : null}
