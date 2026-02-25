@@ -18,7 +18,6 @@ import {
   XCircle,
   Trash2,
   Download,
-  RefreshCw,
   Zap,
   ShieldCheck,
   CreditCard,
@@ -1046,29 +1045,33 @@ function DashboardScreen({ engine, setTabAndUrl, isPremium, showUpgrade }) {
             <button
               type="button"
               onClick={() => setTabAndUrl('add')}
-              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
+              <PlusCircle size={15} className="text-emerald-500" />
               Add
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('history')}
-              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
+              <History size={15} className="text-blue-500" />
               History
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('corporate')}
-              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
+              <Zap size={15} className="text-amber-500" />
               Actions
             </button>
             <button
               type="button"
               onClick={() => setTabAndUrl('settings')}
-              className="rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors"
             >
+              <Settings size={15} className="text-slate-400" />
               Settings
             </button>
           </div>
@@ -1084,23 +1087,32 @@ function PortfolioScreen({ engine }) {
 
   if (symbols.length === 0) {
     return (
-      <Card title="Portfolio" subtitle="No holdings yet" icon={Briefcase}>
-        <div className="text-sm text-slate-500">Add a BUY transaction to begin.</div>
-      </Card>
+      <div className="flex flex-col items-center justify-center text-center py-20 px-6 gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300">
+          <Briefcase size={32} />
+        </div>
+        <div>
+          <div className="text-sm font-black text-slate-900 uppercase tracking-wide">No holdings yet</div>
+          <div className="text-xs text-slate-500 mt-1">Add your first BUY trade to build your portfolio.</div>
+        </div>
+      </div>
     )
   }
 
+  let totalCost = 0
+  for (const sym of symbols) {
+    totalCost += Number(holdings[sym]?.totalCostBasis || 0)
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-4 transition-all hover:bg-emerald-50">
-        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
-          <RefreshCw size={22} strokeWidth={2.5} />
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1 pb-1">
+        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+          {symbols.length} holding{symbols.length !== 1 ? 's' : ''}
         </div>
-        <div className="text-xs text-emerald-800 leading-relaxed">
-          <span className="font-black uppercase tracking-wider block mb-0.5 text-[10px]">Pro Tip</span>
-          <strong>Refresh the page</strong> in your browser to fetch the latest PSX market prices and update your portfolio value.
-        </div>
+        <div className="text-xs font-black text-slate-900">{formatPKR(totalCost)} total cost</div>
       </div>
+
       {symbols.map((sym) => {
         const h = holdings[sym]
         const qty = Number(h?.totalQuantity || 0)
@@ -1109,11 +1121,16 @@ function PortfolioScreen({ engine }) {
 
         return (
           <div key={sym} className="rounded-2xl bg-white border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="text-xl font-black tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">{sym}</div>
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-tight">
-                <Briefcase size={12} />
-                {formatNumber(qty)} shares
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 font-black text-[11px] tracking-tight flex-shrink-0">
+                {sym.slice(0, 3)}
+              </div>
+              <div className="flex-1 flex items-center justify-between min-w-0">
+                <div className="text-lg font-black tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">{sym}</div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-tight">
+                  <Briefcase size={12} />
+                  {formatNumber(qty)}
+                </div>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -1203,7 +1220,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className={
                 'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-black uppercase tracking-widest transition-all ' +
                 (type === 'BUY'
-                  ? 'bg-white shadow-sm text-emerald-600 border border-slate-200/50'
+                  ? 'bg-emerald-500 shadow-sm text-white border border-emerald-600'
                   : 'text-slate-400 hover:text-slate-600')
               }
             >
@@ -1216,7 +1233,7 @@ function AddTransactionScreen({ engine, persist, onSaved }) {
               className={
                 'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-black uppercase tracking-widest transition-all ' +
                 (type === 'SELL'
-                  ? 'bg-white shadow-sm text-rose-600 border border-slate-200/50'
+                  ? 'bg-rose-500 shadow-sm text-white border border-rose-600'
                   : 'text-slate-400 hover:text-slate-600')
               }
             >
@@ -1699,7 +1716,7 @@ export default function App() {
             <SkeletonBlock className="h-6 w-40 rounded-xl" />
           </div>
         </header>
-        <main className="flex-1 px-4 pb-24">
+        <main className="flex-1 px-4 pt-4 pb-24">
           <DashboardSkeleton />
         </main>
       </div>
@@ -1740,7 +1757,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pb-24">
+      <main className="flex-1 px-4 pt-4 pb-24">
         {tab === 'home' ? (hydrating ? <DashboardSkeleton /> : <DashboardScreen engine={engine} setTabAndUrl={setTabAndUrl} isPremium={profile.isPremium} showUpgrade={showUpgrade} />) : null}
         {tab === 'add' ? <AddTransactionScreen engine={engine} persist={persist} onSaved={refresh} /> : null}
         {tab === 'portfolio' ? (hydrating ? <PortfolioSkeleton /> : <PortfolioScreen engine={engine} onRefresh={refresh} />) : null}
